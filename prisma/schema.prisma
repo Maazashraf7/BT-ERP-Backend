@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////////////
+// TENANT (CLIENT)
+//////////////////////////////
+model Tenant {
+  id        String     @id @default(uuid())
+  name      String
+  type      TenantType
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+
+  users         User[]
+  roles         Role[]
+  modules       TenantModule[]
+  students      Student[]
+  subscriptions Subscription[]
+}
+
+enum TenantType {
+  SCHOOL
+  COACHING
+}
+
+//////////////////////////////
+// USERS
+//////////////////////////////
+model User {
+  id       String @id @default(uuid())
+  email    String
+  password String
+
+  tenantId String?
+  roleId   String?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  role   Role?   @relation(fields: [roleId], references: [id])
+
+  @@unique([email, tenantId])
+}
+
+//////////////////////////////
+// ROLES & PERMISSIONS (RBAC)
+//////////////////////////////
+model Role {
+  id   String @id @default(uuid())
+  name String
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  users       User[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id  String @id @default(uuid())
+  key String @unique
+
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+//////////////////////////////
+// MODULE SYSTEM
+//////////////////////////////
+model Module {
+  id   String @id @default(uuid())
+  key  String @unique
+  name String
+
+  tenants     TenantModule[]
+  planModules PlanModule[]
+}
+
+model TenantModule {
+  tenantId String
+  moduleId String
+  enabled  Boolean @default(true)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  module Module @relation(fields: [moduleId], references: [id])
+
+  @@id([tenantId, moduleId])
+}
+
+//////////////////////////////
+// STUDENT (ERP MODULE)
+//////////////////////////////
+model Student {
+  id    String @id @default(uuid())
+  name  String
+  email String
+  class String
+
+  tenantId  String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}
+
+//////////////////////////////
+// SUBSCRIPTION & BILLING
+//////////////////////////////
+model Plan {
+  id       String  @id @default(uuid())
+  name     String   @unique      // TRIAL | BASIC | PRO
+  price    Int // in paise
+  duration Int // in days
+  isActive Boolean @default(true)
+
+  modules       PlanModule[]
+  subscriptions Subscription[]
+}
+
+model PlanModule {
+  planId   String
+  moduleId String
+
+  plan   Plan   @relation(fields: [planId], references: [id])
+  module Module @relation(fields: [moduleId], references: [id])
+
+  @@id([planId, moduleId])
+}
+
+model Subscription {
+  id       String @id @default(uuid())
+  tenantId String
+  planId   String
+
+  status    SubscriptionStatus
+  startDate DateTime
+  endDate   DateTime
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  @@index([tenantId])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
