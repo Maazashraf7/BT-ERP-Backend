@@ -19,6 +19,13 @@ import modulesRoutes from "./platform/modules/module.routes.js";
 import meRoutes from "./modules/me/me.routes.js";
 // import tenantModuleRoutes from "./modules/modules/module.routes.js";
 // import tenantSettingsRoutes from "./modules/settings/settings.routes.js";
+import permissionRoutes from "./modules/admin/permissions/permission.routes.js";
+import roleRoutes from "./modules/admin/roles/role.routes.js";
+import userRoutes from "./modules/admin/users/user.routes.js";
+import tenantProfileRoutes from "./modules/admin/tenantProfile/tenantProfile.routes.js";
+import tenantSettingsRoutes from "./modules/admin/settings/settings.routes.js";
+import tenantBrandingRoutes from "./modules/admin/branding/branding.routes.js";
+import adminDashboardRoutes from "./modules/admin/dashboard/dashboard.routes.js";
 
 // -----------------------------
 // App Init
@@ -78,6 +85,13 @@ app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
 app.use(`${API_V1}/me`, meRoutes);
 // app.use(`${API_V1}/admin/modules`, tenantModuleRoutes);
 // app.use(`${API_V1}/admin/settings`, tenantSettingsRoutes);
+app.use(`${API_V1}/admin/permissions`, permissionRoutes);
+app.use(`${API_V1}/admin/roles`, roleRoutes);
+app.use(`${API_V1}/admin/users`, userRoutes);
+app.use(`${API_V1}/admin/tenant`, tenantProfileRoutes);
+app.use(`${API_V1}/admin/tenant-settings`, tenantSettingsRoutes);
+app.use(`${API_V1}/admin/tenant/branding`, tenantBrandingRoutes);
+app.use(`${API_V1}/admin/dashboard`, adminDashboardRoutes);
 
 // -----------------------------
 // 404 Handler

@@ -4,7 +4,7 @@ import {
   getTenantAuditLogs,
 } from "./audit.controller.js";
 
-// import superAdminAuth from "../../middlewares/superAdmin.middleware.js";
+import superAdminAuth from "../../middlewares/superAdmin.middleware.js";
 // import tenantAuth from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
