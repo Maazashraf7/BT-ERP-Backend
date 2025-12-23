@@ -8,25 +8,72 @@ datasource db {
 }
 
 //////////////////////////////
-// TENANT (CLIENT)
+// TENANT
 //////////////////////////////
 model Tenant {
   id        String     @id @default(uuid())
   name      String
   type      TenantType
-  isActive  Boolean    @default(true)
-  createdAt DateTime   @default(now())
 
+  // Platform control (Super Admin)
+  isActive  Boolean    @default(true)
+  createdAt DateTime  @default(now())
+
+  // Relations
   users         User[]
   roles         Role[]
   modules       TenantModule[]
-  students      Student[]
   subscriptions Subscription[]
+  auditLogs     AuditLog[]
+
+  // Tenant-managed
+  profile   TenantProfile?
+  settings  TenantSetting[]
 }
 
 enum TenantType {
   SCHOOL
   COACHING
+  CLINIC
+  PHARMACY
+  RETAIL
+  RESTAURANT
+  GYM
+  SALON
+}
+
+//////////////////////////////
+// TENANT PROFILE (Branding)
+//////////////////////////////
+model TenantProfile {
+  id        String @id @default(uuid())
+  tenantId  String @unique
+
+  logoUrl    String?
+  faviconUrl String?
+  themeColor String?
+
+  email     String?
+  phone     String?
+  address   String?
+  website   String?
+
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+//////////////////////////////
+// TENANT SETTINGS (Flexible)
+//////////////////////////////
+model TenantSetting {
+  tenantId String
+  key      String
+  value    Json
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@id([tenantId, key])
 }
 
 //////////////////////////////
@@ -103,31 +150,17 @@ model TenantModule {
   @@id([tenantId, moduleId])
 }
 
-//////////////////////////////
-// STUDENT (ERP MODULE)
-//////////////////////////////
-model Student {
-  id    String @id @default(uuid())
-  name  String
-  email String
-  class String
 
-  tenantId  String
-  createdAt DateTime @default(now())
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-
-  @@index([tenantId])
-}
 
 //////////////////////////////
 // SUBSCRIPTION & BILLING
 //////////////////////////////
 model Plan {
   id       String  @id @default(uuid())
-  name     String   @unique      // TRIAL | BASIC | PRO
-  price    Int // in paise
-  duration Int // in days
+  name     String  @unique      // TRIAL | BASIC | PRO
+  price    Int                 // paise
+  duration Int                 // days
   isActive Boolean @default(true)
 
   modules       PlanModule[]
@@ -163,4 +196,36 @@ enum SubscriptionStatus {
   ACTIVE
   EXPIRED
   CANCELLED
+}
+
+//////////////////////////////
+// AUDIT LOGS (CRITICAL)
+//////////////////////////////
+model AuditLog {
+  id        String   @id @default(uuid())
+
+  actorId   String?
+  actorType ActorType   // SUPER_ADMIN | TENANT_USER
+
+  tenantId  String?
+  action    String      // USER_CREATED, TENANT_DISABLED
+  entity    String      // USER, TENANT, MODULE
+  entityId  String?
+
+  meta      Json?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([action])
+}
+
+enum ActorType {
+  SUPER_ADMIN
+  TENANT_USER
 }

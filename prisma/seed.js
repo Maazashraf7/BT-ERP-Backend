@@ -1,8 +1,8 @@
-// import pkg from "@prisma/client";
-// import bcrypt from "bcryptjs";
+import pkg from "@prisma/client";
+import bcrypt from "bcryptjs";
 
-// const { PrismaClient } = pkg;
-// const prisma = new PrismaClient();
+const { PrismaClient } = pkg;
+const prisma = new PrismaClient();
 
 // async function main() {
 //   console.log("🌱 Seeding started...");
@@ -114,31 +114,83 @@
 //   .finally(async () => {
 //     await prisma.$disconnect();
 //   });
-import prisma from "../src/core/config/db.js";
+// console.log("🌱 Seeding modules...");
 
-async function main() {
-  console.log("🌱 Seeding plans...");
+// console.log("🌱 Seeding permissions...");
 
-  // TRIAL PLAN
-  const trialPlan = await prisma.plan.upsert({
-    where: { name: "TRIAL" },
-    update: {},
-    create: {
-      name: "TRIAL",
-      price: 0,
-      duration: 14, // 14 days trial
-      isActive: true,
-    },
-  });
+// const permissions = [
+//   "view_dashboard",
+//   "manage_students",
+//   "manage_attendance",
+//   "manage_fees",
+// ];
 
-  console.log("✅ TRIAL plan ready:", trialPlan.name);
+// for (const key of permissions) {
+//   await prisma.permission.upsert({
+//     where: { key },
+//     update: {},
+//     create: { key },
+//   });
+// }
+
+// console.log("✅ Permissions seeded");
+
+// console.log("🌱 Linking modules to TRIAL plan...");
+
+// const trialPlan = await prisma.plan.findFirst({
+//   where: { name: "TRIAL", isActive: true },
+// });
+
+// if (!trialPlan) {
+//   throw new Error("TRIAL plan not found");
+// }
+
+// const allModules = await prisma.module.findMany();
+
+// for (const module of allModules) {
+//   await prisma.planModule.upsert({
+//     where: {
+//       planId_moduleId: {
+//         planId: trialPlan.id,
+//         moduleId: module.id,
+//       },
+//     },
+//     update: {},
+//     create: {
+//       planId: trialPlan.id,
+//       moduleId: module.id,
+//     },
+//   });
+// }
+
+// console.log("✅ Plan modules linked");
+
+console.log("🌱 Assigning permissions to Admin roles...");
+
+const adminRoles = await prisma.role.findMany({
+  where: { name: "Admin" },
+});
+
+const allPermissions = await prisma.permission.findMany();
+
+for (const role of adminRoles) {
+  for (const permission of allPermissions) {
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: role.id,
+          permissionId: permission.id,
+        },
+      },
+      update: {},
+      create: {
+        roleId: role.id,
+        permissionId: permission.id,
+      },
+    });
+  }
 }
 
-main()
-  .catch((err) => {
-    console.error("❌ Seed failed:", err);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+console.log("✅ Role permissions assigned");
+
+
