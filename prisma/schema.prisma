@@ -126,17 +126,29 @@ model RolePermission {
 
   @@id([roleId, permissionId])
 }
-
 //////////////////////////////
-// MODULE SYSTEM
+// MODULE SYSTEM (UPDATED)
 //////////////////////////////
 model Module {
-  id   String @id @default(uuid())
-  key  String @unique
-  name String
+  id        String @id @default(uuid())
+  key       String @unique
+  name      String
+
+  // NEW
+  isCommon  Boolean @default(false)
 
   tenants     TenantModule[]
   planModules PlanModule[]
+  tenantTypes ModuleTenantType[]
+}
+
+model ModuleTenantType {
+  moduleId   String
+  tenantType TenantType
+
+  module Module @relation(fields: [moduleId], references: [id])
+
+  @@id([moduleId, tenantType])
 }
 
 model TenantModule {
@@ -149,7 +161,6 @@ model TenantModule {
 
   @@id([tenantId, moduleId])
 }
-
 
 
 

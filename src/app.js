@@ -1,27 +1,41 @@
 import express from "express";
 import cors from "cors";
 
-// Existing auth (tenant users / future use)
+// -----------------------------
+// Route Imports
+// -----------------------------
+
+// 🔐 Auth
 import tenantAuthRoutes from "./modules/auth/auth.routes.js";
+import superAdminAuthRoutes from "./platform/auth/auth.routes.js";
 
-// 🔐 Platform (Super Admin)
-import platformAuthRoutes from "./platform/auth/auth.routes.js";
+// 👑 Super Admin (Platform)
 import tenantRoutes from "./platform/tenants/tenant.routes.js";
-import meRoutes from "./modules/me/me.routes.js";
 import platformDashboardRoutes from "./platform/dashboard/dashboard.routes.js";
+import platformAuditRoutes from "./platform/audit/audit.routes.js";
+import modulesRoutes from "./platform/modules/module.routes.js";
 
+// 🏫 Tenant Admin
+import meRoutes from "./modules/me/me.routes.js";
+// import tenantModuleRoutes from "./modules/modules/module.routes.js";
+// import tenantSettingsRoutes from "./modules/settings/settings.routes.js";
 
+// -----------------------------
+// App Init
+// -----------------------------
 const app = express();
 
 // -----------------------------
-// CORS Middleware
+// CORS
 // -----------------------------
 const origins = process.env.CORS_ORIGINS || "http://localhost:5174";
-const corsOptions = {
-  origin: origins.split(","),
-  credentials: true,
-};
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: origins.split(","),
+    credentials: true,
+  })
+);
+
 // -----------------------------
 // Global Middlewares
 // -----------------------------
@@ -32,28 +46,47 @@ app.use(express.urlencoded({ extended: true }));
 // Health Check
 // -----------------------------
 app.get("/", (req, res) => {
-  res.json({ status: "OK", message: "BT-ERP Backend Running 🚀" });
+  res.json({
+    status: "OK",
+    service: "BT-ERP Backend",
+    version: "v1",
+  });
 });
 
+// =============================
+// API v1 ROUTES
+// =============================
+const API_V1 = "/api/v1";
+
 // -----------------------------
-// Routes
+// 🔐 AUTH
 // -----------------------------
+app.use(`${API_V1}/auth`, tenantAuthRoutes);                 // tenant users
+app.use(`${API_V1}/super-admin/auth`, superAdminAuthRoutes); // super admin
 
-// Tenant / User auth (future: tenant login)
-app.use("/api/auth", tenantAuthRoutes);
-app.use("/api/me", meRoutes);
+// -----------------------------
+// 👑 SUPER ADMIN (PLATFORM)
+// -----------------------------
+app.use(`${API_V1}/super-admin/tenants`, tenantRoutes);
+app.use(`${API_V1}/super-admin/dashboard`, platformDashboardRoutes);
+app.use(`${API_V1}/super-admin/audit-logs`, platformAuditRoutes);
+app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
 
-
-// Platform-level routes (Super Admin)
-app.use("/platform/auth", platformAuthRoutes);
-app.use("/platform/tenants", tenantRoutes);
-app.use("/platform/dashboard", platformDashboardRoutes);
+// -----------------------------
+// 🏫 TENANT ADMIN
+// -----------------------------
+app.use(`${API_V1}/me`, meRoutes);
+// app.use(`${API_V1}/admin/modules`, tenantModuleRoutes);
+// app.use(`${API_V1}/admin/settings`, tenantSettingsRoutes);
 
 // -----------------------------
 // 404 Handler
 // -----------------------------
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: "Route not found" });
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
 });
 
 export default app;
