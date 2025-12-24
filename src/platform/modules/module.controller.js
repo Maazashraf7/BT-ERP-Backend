@@ -63,7 +63,7 @@ export const createModule = async (req, res) => {
     console.error("CREATE MODULE ERROR:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to create module",
+      message: error.message || "Failed to create module",
     });
   }
 };
