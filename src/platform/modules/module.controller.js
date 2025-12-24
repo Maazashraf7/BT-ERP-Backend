@@ -72,72 +72,32 @@ export const createModule = async (req, res) => {
  * 👑 SUPER ADMIN
  * Enable / Disable module for a tenant
  */
-export const toggleTenantModule = async (req, res) => {
+export const toggleTenantStatus = async (req, res) => {
   try {
     const { tenantId } = req.params;
-    const { moduleId, enabled } = req.body;
+    const { isActive } = req.body;
 
-    if (!moduleId || typeof enabled !== "boolean") {
-      return res.status(400).json({
-        success: false,
-        message: "moduleId and enabled flag are required",
-      });
-    }
-
-    // Ensure tenant exists to avoid foreign key violation
-    const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
-    if (!tenant) {
-      return res.status(404).json({
-        success: false,
-        message: "Tenant not found",
-      });
-    }
-
-    // Ensure module exists
-    const module = await prisma.module.findUnique({ where: { id: moduleId } });
-    if (!module) {
-      return res.status(404).json({
-        success: false,
-        message: "Module not found",
-      });
-    }
-
-    // Perform upsert (both ids are strings in Prisma schema)
-    await prisma.tenantModule.upsert({
-      where: {
-        tenantId_moduleId: { tenantId, moduleId },
-      },
-      update: { enabled },
-      create: { tenantId, moduleId, enabled },
-    });
-
-    // 🔍 Audit tenant-module toggle
-    await createAuditLog({
-      actorType: "SUPER_ADMIN",
-      tenantId,
-      action: enabled
-        ? AUDIT_ACTIONS.TENANT_MODULE_ENABLED
-        : AUDIT_ACTIONS.TENANT_MODULE_DISABLED,
-      entity: "MODULE",
-      entityId: moduleId,
-      meta: { enabled },
-      req,
+    const tenant = await prisma.tenant.update({
+      where: { id: tenantId },
+      data: { isActive },
     });
 
     res.json({
       success: true,
-      message: enabled
-        ? "Module enabled for tenant"
-        : "Module disabled for tenant",
+      tenant,
+      message: isActive
+        ? "Tenant activated successfully"
+        : "Tenant deactivated successfully",
     });
   } catch (error) {
-    console.error("TOGGLE TENANT MODULE ERROR:", error);
+    console.error("TOGGLE TENANT ERROR:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to update tenant module",
+      message: "Failed to update tenant status",
     });
   }
 };
+
 
 /**
  * 👑 SUPER ADMIN
