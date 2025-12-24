@@ -21,7 +21,6 @@ import tenantModuleRoutes from "./modules/tenantModules/tenantModule.routes.js";
 
 
 
-
 // 🏫 Tenant Admin
 import meRoutes from "./modules/me/me.routes.js";
 // import tenantModuleRoutes from "./modules/modules/module.routes.js";
@@ -90,6 +89,7 @@ app.use(`${API_V1}/audit-logs`, platformAuditRoutes);
 app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
 app.use(`${API_V1}/super-admin/plans`, plans);
 app.use(`${API_V1}/admin/tenant-modules`, tenantModuleRoutes);
+  
 
 // -----------------------------
 // 🏫 TENANT ADMIN
