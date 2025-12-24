@@ -41,7 +41,7 @@ export const tenantLogin = async (req, res) => {
         userId: user.id,
         tenantId: user.tenantId,
         roleId: user.roleId,
-        type: "TENANT",
+        type: "TENANT_USER",
       },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
@@ -56,6 +56,7 @@ export const tenantLogin = async (req, res) => {
         id: user.id,
         email: user.email,
         role: user.role.name,
+        type: "TENANT_USER",
       },
       tenant: {
         id: user.tenant.id,

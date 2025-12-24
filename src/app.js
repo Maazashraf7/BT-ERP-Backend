@@ -26,7 +26,7 @@ import tenantProfileRoutes from "./modules/admin/tenantProfile/tenantProfile.rou
 import tenantSettingsRoutes from "./modules/admin/settings/settings.routes.js";
 import tenantBrandingRoutes from "./modules/admin/branding/branding.routes.js";
 import adminDashboardRoutes from "./modules/admin/dashboard/dashboard.routes.js";
-
+import  adminSidebarRoutes from "./modules/sidebar/sidebar.routes.js";
 // -----------------------------
 // App Init
 // -----------------------------
@@ -76,7 +76,7 @@ app.use(`${API_V1}/super-admin/auth`, superAdminAuthRoutes); // super admin
 // -----------------------------
 app.use(`${API_V1}/super-admin/tenants`, tenantRoutes);
 app.use(`${API_V1}/super-admin/dashboard`, platformDashboardRoutes);
-app.use(`${API_V1}/super-admin/audit-logs`, platformAuditRoutes);
+app.use(`${API_V1}/audit-logs`, platformAuditRoutes);
 app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
 
 // -----------------------------
@@ -92,7 +92,7 @@ app.use(`${API_V1}/admin/tenant`, tenantProfileRoutes);
 app.use(`${API_V1}/admin/tenant-settings`, tenantSettingsRoutes);
 app.use(`${API_V1}/admin/tenant/branding`, tenantBrandingRoutes);
 app.use(`${API_V1}/admin/dashboard`, adminDashboardRoutes);
-
+app.use(`${API_V1}/admin/sidebar`, adminSidebarRoutes);
 // -----------------------------
 // 404 Handler
 // -----------------------------

@@ -1,10 +1,13 @@
 import prisma from "../../../core/config/db.js";
 import { createAuditLog } from "../../../platform/audit/audit.service.js";
 import { AUDIT_ACTIONS } from "../../../platform/audit/audit.constants.js";
+import logger from "../../../core/utils/logger.js";
 
 export const upsertTenantProfile = async (req, res) => {
   try {
     const tenantId = req.user.tenantId;
+    const userId = req.user?.id ?? null;
+    logger.info(`[upsertTenantProfile] start - user=${userId} tenant=${tenantId}`);
     const {
       logoUrl,
       faviconUrl,
@@ -47,25 +50,27 @@ export const upsertTenantProfile = async (req, res) => {
     });
 
     // 🔍 Audit
-    await createAuditLog({
-      actorType: "TENANT_USER",
-      tenantId,
-      action: AUDIT_ACTIONS.TENANT_PROFILE_UPDATED,
-      entity: "TENANT_PROFILE",
-      entityId: profile.id,
-      meta: { updatedFields: Object.keys(req.body) },
-      req,
-    });
+    try {
+      await createAuditLog({
+        actorType: "TENANT_USER",
+        tenantId,
+        action: AUDIT_ACTIONS.TENANT_PROFILE_UPDATED,
+        entity: "TENANT_PROFILE",
+        entityId: profile.id,
+        meta: { updatedFields: Object.keys(req.body) },
+        req,
+      });
+      logger.info(`[upsertTenantProfile] audit created for profile id=${profile.id}`);
+    } catch (auditErr) {
+      logger.error(`[upsertTenantProfile] audit creation failed: ${auditErr.message}`, auditErr);
+    }
 
     res.json({
       success: true,
       profile,
     });
   } catch (error) {
-    console.error("TENANT PROFILE UPDATE ERROR:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to update tenant profile",
-    });
+    logger.error(`TENANT PROFILE UPDATE ERROR: ${error.message}`, error);
+    res.status(500).json({ success: false, message: "Failed to update tenant profile" });
   }
 };
