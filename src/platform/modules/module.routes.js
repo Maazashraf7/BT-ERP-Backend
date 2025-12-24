@@ -10,19 +10,19 @@ import { requireSuperAdmin } from "../../core/middlewares/platformAuth.middlewar
 
 const router = Router();
 
-// 👑 MODULE MANAGEMENT
+// 👑 MODULE CATALOG
 router.post("/", requireSuperAdmin, createModule);
 router.get("/", requireSuperAdmin, listModules);
 
 // 👑 TENANT MODULE CONTROL
-router.post(
-  "/tenants/:tenantId",
+router.patch(
+  "/tenants/:tenantId/modules/:moduleId",
   requireSuperAdmin,
   toggleTenantModule
 );
 
 router.get(
-  "/tenants/:tenantId",
+  "/tenants/:tenantId/modules",
   requireSuperAdmin,
   getTenantModules
 );

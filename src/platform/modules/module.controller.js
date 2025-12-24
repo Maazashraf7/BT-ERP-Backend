@@ -72,31 +72,65 @@ export const createModule = async (req, res) => {
  * 👑 SUPER ADMIN
  * Enable / Disable module for a tenant
  */
-export const toggleTenantStatus = async (req, res) => {
+/**
+ * 👑 SUPER ADMIN
+ * Enable / Disable a module for a tenant
+ */
+export const toggleTenantModule = async (req, res) => {
   try {
-    const { tenantId } = req.params;
-    const { isActive } = req.body;
+    const { tenantId, moduleId } = req.params;
+    const { enabled } = req.body;
 
-    const tenant = await prisma.tenant.update({
-      where: { id: tenantId },
-      data: { isActive },
+    if (typeof enabled !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "enabled must be boolean",
+      });
+    }
+
+    const tenantModule = await prisma.tenantModule.upsert({
+      where: {
+        tenantId_moduleId: {
+          tenantId,
+          moduleId,
+        },
+      },
+      update: { enabled },
+      create: {
+        tenantId,
+        moduleId,
+        enabled,
+      },
+    });
+
+    // 🔍 Audit
+    await createAuditLog({
+      actorType: "SUPER_ADMIN",
+      action: enabled
+        ? AUDIT_ACTIONS.MODULE_ENABLED
+        : AUDIT_ACTIONS.MODULE_DISABLED,
+      entity: "MODULE",
+      entityId: moduleId,
+      meta: { tenantId, enabled },
+      req,
     });
 
     res.json({
       success: true,
-      tenant,
-      message: isActive
-        ? "Tenant activated successfully"
-        : "Tenant deactivated successfully",
+      message: enabled
+        ? "Module enabled for tenant"
+        : "Module disabled for tenant",
+      tenantModule,
     });
   } catch (error) {
-    console.error("TOGGLE TENANT ERROR:", error);
+    console.error("TOGGLE TENANT MODULE ERROR:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to update tenant status",
+      message: "Failed to update tenant module",
     });
   }
 };
+
 
 
 /**
