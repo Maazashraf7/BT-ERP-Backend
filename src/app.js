@@ -5,6 +5,8 @@ import cors from "cors";
 // Route Imports
 // -----------------------------
 
+
+
 // 🔐 Auth
 import tenantAuthRoutes from "./modules/auth/auth.routes.js";
 import superAdminAuthRoutes from "./platform/auth/auth.routes.js";
@@ -14,7 +16,7 @@ import tenantRoutes from "./platform/tenants/tenant.routes.js";
 import platformDashboardRoutes from "./platform/dashboard/dashboard.routes.js";
 import platformAuditRoutes from "./platform/audit/audit.routes.js";
 import modulesRoutes from "./platform/modules/module.routes.js";
-
+import plans from "./platform/plans/plan.routes.js";
 // 🏫 Tenant Admin
 import meRoutes from "./modules/me/me.routes.js";
 // import tenantModuleRoutes from "./modules/modules/module.routes.js";
@@ -71,6 +73,9 @@ const API_V1 = "/api/v1";
 app.use(`${API_V1}/auth`, tenantAuthRoutes);                 // tenant users
 app.use(`${API_V1}/super-admin/auth`, superAdminAuthRoutes); // super admin
 
+// public plans comparison
+app.use(`${API_V1}/plans`, plans);
+
 // -----------------------------
 // 👑 SUPER ADMIN (PLATFORM)
 // -----------------------------
@@ -78,6 +83,7 @@ app.use(`${API_V1}/super-admin/tenants`, tenantRoutes);
 app.use(`${API_V1}/super-admin/dashboard`, platformDashboardRoutes);
 app.use(`${API_V1}/audit-logs`, platformAuditRoutes);
 app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
+app.use(`${API_V1}/super-admin/plans`, plans);
 
 // -----------------------------
 // 🏫 TENANT ADMIN
