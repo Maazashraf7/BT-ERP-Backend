@@ -17,6 +17,11 @@ import platformDashboardRoutes from "./platform/dashboard/dashboard.routes.js";
 import platformAuditRoutes from "./platform/audit/audit.routes.js";
 import modulesRoutes from "./platform/modules/module.routes.js";
 import plans from "./platform/plans/plan.routes.js";
+import tenantModuleRoutes from "./modules/tenantModules/tenantModule.routes.js";
+
+
+
+
 // 🏫 Tenant Admin
 import meRoutes from "./modules/me/me.routes.js";
 // import tenantModuleRoutes from "./modules/modules/module.routes.js";
@@ -84,6 +89,7 @@ app.use(`${API_V1}/super-admin/dashboard`, platformDashboardRoutes);
 app.use(`${API_V1}/audit-logs`, platformAuditRoutes);
 app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
 app.use(`${API_V1}/super-admin/plans`, plans);
+app.use(`${API_V1}/admin/tenant-modules`, tenantModuleRoutes);
 
 // -----------------------------
 // 🏫 TENANT ADMIN
