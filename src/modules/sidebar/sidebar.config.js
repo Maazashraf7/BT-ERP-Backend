@@ -78,6 +78,62 @@ export const SIDEBAR_TREE = [
         module: "SETTINGS",
         permission: "SETTINGS_VIEW",
       },
+      {
+
+        key: "ROLES",
+        label: "Roles",
+        route: "/admin/roles",
+        module: "ROLES",
+        permission: "ROLE_VIEW",
+      },
+      {
+
+        key: "TENANT_PROFILE",
+        label: "Tenant Profile",
+        route: "/admin/tenant-profile",
+        module: "TENANT_PROFILE",
+        permission: "TENANT_PROFILE_VIEW",
+      },
+
+      {
+        key: "BRANDING",
+        label: "Branding",
+        route: "/admin/branding",
+        module: "BRANDING",
+        permission: "BRANDING_VIEW",  
+      },
+     
+      {
+        key: "PERMISSIONS",
+        label: "Permissions",
+        route: "/admin/permissions",
+        module: "PERMISSIONS",
+        permission: "PERMISSION_VIEW",  
+
+      },
+
+      {
+        key: "SIDEBAR",
+        label: "Sidebar",
+        route: "/admin/sidebar",
+        module: "SIDEBAR",
+        permission: "SIDEBAR_VIEW",
+      },
+      {
+        key: "TENANT_MODULES",
+        label: "Tenant Modules",
+        route: "/admin/tenant-modules",
+        module: "TENANT_MODULES",
+        permission: "TENANT_MODULES_VIEW",
+
+      },
+      {
+        key: "AUDIT_LOGS",
+        label: "Audit Logs",
+        route: "/admin/audit-logs",
+        module: "AUDIT_LOGS",
+        permission: "AUDIT_LOG_VIEW",
+      }
     ],
   },
 ];

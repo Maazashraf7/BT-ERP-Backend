@@ -7,7 +7,7 @@ import { syncTenantModulesFromPlan } from "./plan.service.js";
 export const syncPlanToTenants = async (req, res) => {
   try {
     const { planId } = req.params;
-    const { mode = "SAFE" } = req.body;
+    const { mode = "SAFE" } = req.body || {};
 
     const subscriptions = await prisma.subscription.findMany({
       where: {
@@ -26,17 +26,23 @@ export const syncPlanToTenants = async (req, res) => {
 
     let updatedCount = 0;
 
-    await prisma.$transaction(async (tx) => {
-      for (const { tenantId } of subscriptions) {
-        await syncTenantModulesFromPlan(
-          tx,
-          tenantId,
-          planId,
-          mode === "STRICT"
-        );
-        updatedCount++;
-      }
-    });
+    // Run a separate interactive transaction per tenant to avoid one long
+    // transaction timing out or becoming invalid for many queries.
+    for (const { tenantId } of subscriptions) {
+      await prisma.$transaction(
+        async (tx) => {
+          await syncTenantModulesFromPlan(
+            tx,
+            tenantId,
+            planId,
+            mode === "STRICT"
+          );
+        },
+        // increase timeout per-tenant (ms) to allow larger plans to complete
+        { timeout: 30000 }
+      );
+      updatedCount++;
+    }
 
     res.json({
       success: true,

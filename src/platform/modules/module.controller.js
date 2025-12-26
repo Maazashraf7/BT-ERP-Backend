@@ -211,3 +211,153 @@ export const listModules = async (req, res) => {
     });
   }
 };
+
+/**
+ * 👑 SUPER ADMIN make common module
+ * Update module to be common
+ */
+export const makeModuleCommon = async (req, res) => {
+  try {
+    const { moduleId } = req.params;
+    const module = await prisma.module.update({
+      where: { id: moduleId },
+      data: { isCommon: true },
+    });
+    // 🔍 Audit
+    await createAuditLog({
+      actorType: "SUPER_ADMIN",
+      action: AUDIT_ACTIONS.MODULE_MADE_COMMON,
+      entity: "MODULE",
+      entityId: moduleId,
+      meta: {},
+      req,
+    });
+    res.json({
+      success: true,
+      message: "Module updated to common",
+      module,
+    });
+  } catch (error) {
+    console.error("MAKE MODULE COMMON ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update module",
+    });
+  } 
+};
+
+/**
+ * 👑 SUPER ADMIN get common modules
+ */
+
+export const getCommonModules = async (req, res) => {
+  try {
+    const modules = await prisma.module.findMany({
+      where: { isCommon: true },
+      orderBy: { name: "asc" },
+    });
+    res.json({
+      success: true,
+      modules,
+    });
+  } catch (error) {
+    console.error("GET COMMON MODULES ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch common modules",
+    });
+  }
+};
+
+
+
+
+/**
+ * 👑 SUPER ADMIN
+ * Delete a module
+ * Cascades to tenant modules and tenant-type mappings
+ */
+export const deleteModule = async (req, res) => {
+  try {
+    const { moduleId } = req.params;
+
+    if (!moduleId) {
+      return res.status(400).json({
+        success: false,
+        message: "moduleId is required",
+      });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1️⃣ Check existence FIRST
+      const exists = await tx.module.findUnique({
+        where: { id: moduleId },
+        select: { id: true },
+      });
+
+      if (!exists) {
+        return null;
+      }
+
+      // 2️⃣ Delete dependencies
+      await tx.planModule.deleteMany({
+        where: { moduleId },
+      });
+
+      await tx.tenantModule.deleteMany({
+        where: { moduleId },
+      });
+
+      // 3️⃣ Delete module safely
+      await tx.module.deleteMany({
+        where: { id: moduleId },
+      });
+
+      return exists;
+    });
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: "Module not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Module deleted successfully",
+    });
+  } catch (error) {
+    console.error("DELETE MODULE ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete module",
+    });
+  }
+};
+
+
+//**
+// delete all modules - FOR TESTING PURPOSES ONLY
+
+export const deleteAllModules = async (req, res) => {
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.planModule.deleteMany({});
+      await tx.tenantModule.deleteMany({});
+      await tx.module.deleteMany({});
+    });
+
+    res.json({
+      success: true,
+      message: "All modules deleted successfully",
+    });
+  } catch (error) {
+    console.error("DELETE ALL MODULES ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete all modules",
+    });
+  }
+};
+

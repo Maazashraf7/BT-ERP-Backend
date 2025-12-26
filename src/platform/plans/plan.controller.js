@@ -15,6 +15,15 @@ export const createPlan = async (req, res) => {
       });
     }
 
+    // Prevent duplicate plan names
+    const existingPlan = await prisma.plan.findUnique({ where: { name } });
+    if (existingPlan) {
+      return res.status(400).json({
+        success: false,
+        message: `Plan with name '${name}' already exists`,
+      });
+    }
+
     const plan = await prisma.$transaction(async (tx) => {
       const createdPlan = await tx.plan.create({
         data: { name, price: price || 0, duration },
@@ -202,6 +211,174 @@ export const updatePlanModules = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to update plan modules",
+    });
+  }
+};
+
+/**
+ * * 👑 Setup Default Plans (if not exist)
+ */
+export const setupDefaultPlans = async (req, res) => {
+  try {
+    const defaultPlans = [
+      {
+        name: "TRIAL",
+        price: 0,
+        duration: 30,
+        isActive: true,
+      },
+      {
+        name: "BASIC",
+        price: 99,
+        duration: 30,
+        isActive: true,
+      },
+      {
+        name: "PREMIUM",
+        price: 299,
+        duration: 30,
+        isActive: true,
+      },
+    ];
+
+    for (const plan of defaultPlans) {
+      await prisma.plan.upsert({
+        where: { name: plan.name },
+        update: {},
+        create: plan,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Default plans setup successfully",
+    });
+  } catch (error) {
+    console.error("SETUP DEFAULT PLANS ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to setup default plans",
+    });
+  }
+};
+
+/**
+ * 👑 Sync plan modules to all tenants on that plan
+ */
+export const syncPlanToTenants = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const { mode = "SAFE" } = req.body || {};
+    const subscriptions = await prisma.subscription.findMany({
+      where: {
+        planId,
+        status: "ACTIVE",
+      },
+      select: { tenantId: true },
+    });
+    if (subscriptions.length === 0) {
+      return res.json({
+        success: true,
+        message: "No active tenants on this plan",
+      });
+    }
+    let updatedCount = 0;
+    // Run a separate interactive transaction per tenant to avoid one long
+    // transaction timing out or becoming invalid for many queries.
+    for (const { tenantId } of subscriptions) {
+      await prisma.$transaction(
+        async (tx) => {
+          await syncTenantModulesFromPlan(
+            tx,
+            tenantId,
+            planId,
+            mode === "STRICT"
+          );
+        },
+        // increase timeout per-tenant (ms) to allow larger plans to complete
+        { timeout: 30000 }  
+      );
+      updatedCount++;
+    }
+    res.json({
+      success: true,
+      message: `Plan synced to ${updatedCount} tenants`,
+      mode,
+    });
+  } catch (error) {
+    console.error("SYNC PLAN ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to sync plan to tenants",
+    });
+  }
+};
+
+/**
+ * 👑 SUPER ADMIN get plan details
+ */
+export const getPlanDetails = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const plan = await prisma.plan.findUnique({
+      where: { id: planId },
+      include: {
+        modules: {
+          include: { module: true },
+        },
+      },
+    });
+    if (!plan) {
+      return res.status(404).json({
+        success: false,
+        message: "Plan not found",
+      });
+    }
+    res.json({
+      success: true,
+      plan,
+    });
+  } catch (error) {
+    console.error("GET PLAN DETAILS ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch plan details",
+    });
+  }   
+};
+
+/**
+ * * 👑 SUPER ADMIN add common modules to plan
+ *  */
+export const addCommonModulesToPlan = async (req, res) => {
+  try {
+    const { planId } = req.params;
+
+    const commonModules = await prisma.module.findMany({
+      where: { isCommon: true },
+    });
+    if (commonModules.length === 0) {
+      return res.json({
+        success: true,
+        message: "No common modules to add",
+      });
+    }
+    await prisma.planModule.createMany({
+      data: commonModules.map((m) => ({
+        planId,
+        moduleId: m.id,
+      })),
+      skipDuplicates: true,
+    });
+    res.json({
+      success: true,
+      message: "Common modules added to plan successfully",
+    });
+  } catch (error) {
+    console.error("ADD COMMON MODULES TO PLAN ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to add common modules to plan",
     });
   }
 };

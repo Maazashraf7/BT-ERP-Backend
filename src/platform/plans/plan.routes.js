@@ -5,9 +5,13 @@ import {
   updatePlan,
   assignPlanToTenant,
   updatePlanModules,
+  addCommonModulesToPlan,
+  setupDefaultPlans,
+  getPlanDetails,
+
 } from "./plan.controller.js";
 import { comparePlans } from "./plan.public.controller.js";
-
+import { syncPlanToTenants } from "./plan.sync.controller.js";
 import { requireSuperAdmin } from "../../core/middlewares/platformAuth.middleware.js";
 
 const router = Router();
@@ -20,4 +24,8 @@ router.get("/", requireSuperAdmin, listPlans);
 router.put("/:planId", requireSuperAdmin, updatePlan);
 router.post("/tenants/:tenantId/assign", requireSuperAdmin, assignPlanToTenant);
 router.put("/:planId/modules", requireSuperAdmin, updatePlanModules);
+router.post("/setup-defaults", requireSuperAdmin, setupDefaultPlans);
+router.post("/:planId/sync-to-tenants", requireSuperAdmin, syncPlanToTenants);
+router.get("/:planId", requireSuperAdmin, getPlanDetails);
+router.post("/:planId/add-common-modules", requireSuperAdmin, addCommonModulesToPlan);
 export default router;

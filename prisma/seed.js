@@ -165,32 +165,64 @@ const prisma = new PrismaClient();
 
 // console.log("✅ Plan modules linked");
 
-console.log("🌱 Assigning permissions to Admin roles...");
+// console.log("🌱 Assigning permissions to Admin roles...");
 
-const adminRoles = await prisma.role.findMany({
-  where: { name: "Admin" },
-});
+// const adminRoles = await prisma.role.findMany({
+//   where: { name: "Admin" },
+// });
 
-const allPermissions = await prisma.permission.findMany();
+// const allPermissions = await prisma.permission.findMany();
 
-for (const role of adminRoles) {
-  for (const permission of allPermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: role.id,
-          permissionId: permission.id,
-        },
+// for (const role of adminRoles) {
+//   for (const permission of allPermissions) {
+//     await prisma.rolePermission.upsert({
+//       where: {
+//         roleId_permissionId: {
+//           roleId: role.id,
+//           permissionId: permission.id,
+//         },
+//       },
+//       update: {},
+//       create: {
+//         roleId: role.id,
+//         permissionId: permission.id,
+//       },
+//     });
+//   }
+// }
+
+// console.log("✅ Role permissions assigned");
+
+const COMMON_MODULES = [
+  // { key: "dashboard", name: "Dashboard" },
+  { key: "profile", name: "Profile" },
+  { key: "users", name: "User Management" },
+  { key: "roles", name: "Role & Permissions" },
+  { key: "settings", name: "Settings" },
+  { key: "notifications", name: "Notifications" },
+  { key: "audit_logs", name: "Audit Logs" },
+  { key: "support", name: "Support" },
+];
+
+async function seedCommonModules() {
+  for (const mod of COMMON_MODULES) {
+    await prisma.module.upsert({
+      where: { key: mod.key },
+      update: {
+        isCommon: true,
+       
       },
-      update: {},
       create: {
-        roleId: role.id,
-        permissionId: permission.id,
+        key: mod.key,
+        name: mod.name,
+        isCommon: true,
+       
       },
     });
   }
+
+  console.log("✅ Common modules seeded");
 }
-
-console.log("✅ Role permissions assigned");
-
-
+seedCommonModules()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());

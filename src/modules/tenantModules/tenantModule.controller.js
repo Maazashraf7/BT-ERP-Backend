@@ -23,13 +23,12 @@ export const getTenantModules = async (req, res) => {
 
     const planId = subscription.planId;
 
-    // 2️⃣ Plan allowed modules
+    // 2️⃣ Plan allowed modules (PLAN ONLY)
     const planModules = await prisma.planModule.findMany({
       where: { planId },
-      select: { moduleId: true },
+      include: { module: true },
+      orderBy: { module: { name: "asc" } },
     });
-
-    const planModuleIds = planModules.map(pm => pm.moduleId);
 
     // 3️⃣ Tenant enabled modules
     const tenantModules = await prisma.tenantModule.findMany({
@@ -41,33 +40,16 @@ export const getTenantModules = async (req, res) => {
       tenantModules.map(tm => [tm.moduleId, tm.enabled])
     );
 
-    // 4️⃣ All modules (system-wide)
-    const allModules = await prisma.module.findMany({
-      orderBy: { name: "asc" },
-    });
-
-    // 5️⃣ Build response
-    const modules = allModules.map(mod => {
-      const allowedByPlan =
-        mod.isCommon || planModuleIds.includes(mod.id);
-
-      const enabled =
-        mod.isCommon
-          ? true
-          : tenantModuleMap.get(mod.id) ?? false;
+    // 4️⃣ Build response (PLAN MODULES ONLY)
+    const modules = planModules.map(({ module }) => {
+      const enabled = tenantModuleMap.get(module.id) ?? true;
 
       return {
-        id: mod.id,
-        key: mod.key,
-        name: mod.name,
-        isCommon: mod.isCommon,
-        allowedByPlan,
+        id: module.id,
+        key: module.key,
+        name: module.name,
         enabled,
-        status: enabled
-          ? "ACTIVE"
-          : allowedByPlan
-          ? "DISABLED"
-          : "LOCKED",
+        status: enabled ? "ACTIVE" : "DISABLED",
       };
     });
 
@@ -76,6 +58,7 @@ export const getTenantModules = async (req, res) => {
       plan: subscription.plan.name,
       modules,
     });
+
   } catch (error) {
     console.error("GET TENANT MODULES ERROR:", error);
     res.status(500).json({
