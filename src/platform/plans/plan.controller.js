@@ -56,6 +56,24 @@ export const createPlan = async (req, res) => {
   }
 };
 
+
+/**
+ * Delete Plan
+
+ */
+export const deletePlan = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    await prisma.plan.delete({ where: { id: planId } });
+    res.json({
+      success: true,
+      message: "Plan deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to delete plan" });
+  }
+};
+
 /**
  * 👑 List Plans
  */

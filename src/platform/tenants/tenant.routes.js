@@ -4,6 +4,7 @@ import {
   getTenants,
   listTenants,
   toggleTenantStatus,
+  deleteTenant,
 } from "./tenant.controller.js";
 
 import { requireSuperAdmin } from "../../core/middlewares/platformAuth.middleware.js";
@@ -22,6 +23,9 @@ router.get("/", requireSuperAdmin, getTenants);
 
 // Get tenants with active plan info (dashboard view)
 router.get("/list", requireSuperAdmin, listTenants);
+
+// Delete tenant
+router.delete("/:tenantId", requireSuperAdmin, deleteTenant);
 
 // Activate / Deactivate tenant
 router.patch(

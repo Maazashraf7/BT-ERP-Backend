@@ -155,6 +155,22 @@ export const getTenants = async (req, res) => {
 };
 
 /**
+ * Delete Tenant
+ */
+export const deleteTenant = async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    await prisma.tenant.delete({ where: { id: tenantId } });
+    res.json({
+      success: true,
+      message: "Tenant deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to delete tenant" });
+  }
+};
+
+/**
  * SUPER ADMIN: List Tenants with Active Subscription
  */
 export const listTenants = async (req, res) => {
