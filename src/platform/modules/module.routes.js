@@ -7,9 +7,12 @@ import {
  
   getCommonModules,
   makeModuleCommon,
-  deleteModule, 
   deleteAllModules,
 
+  archiveModule,
+  restoreModule,
+
+  
 
 } from "./module.controller.js";
 
@@ -23,7 +26,9 @@ router.get("/", requireSuperAdmin, listModules);
 router.get("/common", requireSuperAdmin, getCommonModules);
 // router.get("/:moduleId", requireSuperAdmin, getModuleDetails);
 // router.put("/:moduleId", requireSuperAdmin, updateModule);
-router.delete("/:moduleId", requireSuperAdmin, deleteModule);
+// router.delete("/:moduleId", requireSuperAdmin, deleteModule);
+router.post("/:moduleId/archive", requireSuperAdmin, archiveModule);
+router.post("/:moduleId/restore", requireSuperAdmin, restoreModule);
 router.post("/:moduleId/make-common", requireSuperAdmin, makeModuleCommon);
 router.delete("/delete-all", requireSuperAdmin, deleteAllModules);
 // 👑 TENANT MODULE CONTROL

@@ -130,17 +130,19 @@ model RolePermission {
 // MODULE SYSTEM (UPDATED)
 //////////////////////////////
 model Module {
-  id        String @id @default(uuid())
-  key       String @unique
+  id        String   @id @default(uuid())
+  key       String   @unique
   name      String
+  isCommon  Boolean  @default(false)
 
-  // NEW
-  isCommon  Boolean @default(false)
+  isDeleted Boolean  @default(false)
+  deletedAt DateTime?
 
   tenants     TenantModule[]
   planModules PlanModule[]
   tenantTypes ModuleTenantType[]
 }
+
 
 model ModuleTenantType {
   moduleId   String
@@ -156,11 +158,12 @@ model TenantModule {
   moduleId String
   enabled  Boolean @default(true)
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  module Module @relation(fields: [moduleId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Restrict)
 
   @@id([tenantId, moduleId])
 }
+
 
 
 
@@ -197,11 +200,10 @@ model Subscription {
   startDate DateTime
   endDate   DateTime
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
-  plan   Plan   @relation(fields: [planId], references: [id])
-
-  @@index([tenantId])
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Restrict)
 }
+
 
 enum SubscriptionStatus {
   ACTIVE

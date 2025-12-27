@@ -88,22 +88,30 @@ export const toggleTenantModule = async (req, res) => {
       });
     }
 
-    const tenantModule = await prisma.tenantModule.upsert({
+    // ❗ Ensure module is active
+    const module = await prisma.module.findFirst({
       where: {
-        tenantId_moduleId: {
-          tenantId,
-          moduleId,
-        },
+        id: moduleId,
+        isDeleted: false,
       },
-      update: { enabled },
-      create: {
-        tenantId,
-        moduleId,
-        enabled,
-      },
+      select: { id: true },
     });
 
-    // 🔍 Audit
+    if (!module) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot enable an archived module",
+      });
+    }
+
+    const tenantModule = await prisma.tenantModule.upsert({
+      where: {
+        tenantId_moduleId: { tenantId, moduleId },
+      },
+      update: { enabled },
+      create: { tenantId, moduleId, enabled },
+    });
+
     await createAuditLog({
       actorType: "SUPER_ADMIN",
       action: enabled
@@ -133,6 +141,7 @@ export const toggleTenantModule = async (req, res) => {
 
 
 
+
 /**
  * 👑 SUPER ADMIN
  * Get enabled modules for a tenant
@@ -141,25 +150,35 @@ export const getTenantModules = async (req, res) => {
   try {
     const { tenantId } = req.params;
 
-    const modules = await prisma.tenantModule.findMany({
-      where: { tenantId },
-      include: {
-        module: true,
+    const modules = await prisma.module.findMany({
+      where: {
+        isDeleted: false,
+        tenants: {
+          some: { tenantId },
+        },
+      },
+      select: {
+        id: true,
+        key: true,
+        name: true,
+        tenants: {
+          where: { tenantId },
+          select: { enabled: true },
+        },
       },
     });
 
     res.json({
       success: true,
-      modules: modules.map((tm) => ({
-        id: tm.module.id,
-        key: tm.module.key,
-        name: tm.module.name,
-        enabled: tm.enabled,
+      modules: modules.map((m) => ({
+        id: m.id,
+        key: m.key,
+        name: m.name,
+        enabled: m.tenants[0]?.enabled ?? false,
       })),
     });
   } catch (error) {
     console.error("GET TENANT MODULES ERROR:", error);
-
     res.status(500).json({
       success: false,
       message: "Failed to fetch tenant modules",
@@ -167,26 +186,30 @@ export const getTenantModules = async (req, res) => {
   }
 };
 
+
 /**
  * 👑 SUPER ADMIN
  * List all modules (optional tenantType filter)
  */
 export const listModules = async (req, res) => {
   try {
-    const { tenantType } = req.query;
+    const { tenantType, includeArchived } = req.query;
 
-    const where = tenantType
-      ? {
-          OR: [
-            { isCommon: true },
-            {
-              tenantTypes: {
-                some: { tenantType },
+    const where = {
+      ...(includeArchived ? {} : { isDeleted: false }),
+      ...(tenantType
+        ? {
+            OR: [
+              { isCommon: true },
+              {
+                tenantTypes: {
+                  some: { tenantType },
+                },
               },
-            },
-          ],
-        }
-      : {};
+            ],
+          }
+        : {}),
+    };
 
     const modules = await prisma.module.findMany({
       where,
@@ -198,19 +221,16 @@ export const listModules = async (req, res) => {
       },
     });
 
-    res.json({
-      success: true,
-      modules,
-    });
+    res.json({ success: true, modules });
   } catch (error) {
     console.error("LIST MODULES ERROR:", error);
-
     res.status(500).json({
       success: false,
       message: "Failed to fetch modules",
     });
   }
 };
+
 
 /**
  * 👑 SUPER ADMIN make common module
@@ -277,7 +297,77 @@ export const getCommonModules = async (req, res) => {
  * Delete a module
  * Cascades to tenant modules and tenant-type mappings
  */
-export const deleteModule = async (req, res) => {
+
+
+// export const deleteModule = async (req, res) => {
+
+//   try {
+//     const { moduleId } = req.params;
+
+//     if (!moduleId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "moduleId is required",
+//       });
+//     }
+
+//     const result = await prisma.$transaction(async (tx) => {
+//       // 1️⃣ Check existence FIRST
+//       const exists = await tx.module.findUnique({
+//         where: { id: moduleId },
+//         select: { id: true },
+//       });
+
+//       if (!exists) {
+//         return null;
+//       }
+
+//       // 2️⃣ Delete dependencies
+//       await tx.planModule.deleteMany({
+//         where: { moduleId },
+//       });
+
+//       await tx.tenantModule.deleteMany({
+//         where: { moduleId },
+//       });
+
+//       // 3️⃣ Delete module safely
+//       await tx.module.deleteMany({
+//         where: { id: moduleId },
+//       });
+
+//       return exists;
+//     });
+
+//     if (!result) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Module not found",
+//       });
+//     }
+
+//     res.json({
+//       success: true,
+//       message: "Module deleted successfully",
+//     });
+//   } catch (error) {
+//     console.error("DELETE MODULE ERROR:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to delete module",
+//     });
+//   }
+// };
+
+
+//**
+// delete all modules - FOR TESTING PURPOSES ONLY
+
+
+/**
+ * Archives Modules 
+ */
+export const archiveModule = async (req, res) => {
   try {
     const { moduleId } = req.params;
 
@@ -289,68 +379,133 @@ export const deleteModule = async (req, res) => {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1️⃣ Check existence FIRST
-      const exists = await tx.module.findUnique({
-        where: { id: moduleId },
+
+      // 1️⃣ Check module exists & not already archived
+      const module = await tx.module.findFirst({
+        where: {
+          id: moduleId,
+          isDeleted: false,
+        },
         select: { id: true },
       });
 
-      if (!exists) {
-        return null;
-      }
+      if (!module) return null;
 
-      // 2️⃣ Delete dependencies
+      // 2️⃣ Disable module for all tenants (DO NOT delete)
+      await tx.tenantModule.updateMany({
+        where: { moduleId },
+        data: { enabled: false },
+      });
+
+      // 3️⃣ Remove module from future plans
       await tx.planModule.deleteMany({
         where: { moduleId },
       });
 
-      await tx.tenantModule.deleteMany({
-        where: { moduleId },
-      });
-
-      // 3️⃣ Delete module safely
-      await tx.module.deleteMany({
+      // 4️⃣ Archive module (soft delete)
+      await tx.module.update({
         where: { id: moduleId },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+        },
       });
 
-      return exists;
+      return module;
     });
 
     if (!result) {
       return res.status(404).json({
         success: false,
-        message: "Module not found",
+        message: "Module not found or already archived",
       });
     }
 
     res.json({
       success: true,
-      message: "Module deleted successfully",
+      message: "Module archived successfully",
     });
+
   } catch (error) {
-    console.error("DELETE MODULE ERROR:", error);
+    console.error("ARCHIVE MODULE ERROR:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to delete module",
+      message: "Failed to archive module",
+    });
+  }
+};
+
+/**
+ * Restore Archived Module 
+ */
+export const restoreModule = async (req, res) => {
+  try {
+    const { moduleId } = req.params;
+
+    const module = await prisma.module.findUnique({
+      where: { id: moduleId },
+    });
+
+    if (!module || !module.isDeleted) {
+      return res.status(404).json({
+        success: false,
+        message: "Module not found or not archived",
+      });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.module.update({
+        where: { id: moduleId },
+        data: {
+          isDeleted: false,
+          deletedAt: null,
+        },
+      });
+
+      // Optional: auto-enable for common modules
+      if (module.isCommon) {
+        await tx.tenantModule.updateMany({
+          where: { moduleId },
+          data: { enabled: true },
+        });
+      }
+    });
+
+    res.json({
+      success: true,
+      message: "Module restored successfully",
+    });
+  } catch (error) {
+    console.error("RESTORE MODULE ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to restore module",
     });
   }
 };
 
 
-//**
-// delete all modules - FOR TESTING PURPOSES ONLY
+
 
 export const deleteAllModules = async (req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(403).json({
+      success: false,
+      message: "This action is disabled in production",
+    });
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
       await tx.planModule.deleteMany({});
       await tx.tenantModule.deleteMany({});
+      await tx.moduleTenantType.deleteMany({});
       await tx.module.deleteMany({});
     });
 
     res.json({
       success: true,
-      message: "All modules deleted successfully",
+      message: "All modules deleted (DEV only)",
     });
   } catch (error) {
     console.error("DELETE ALL MODULES ERROR:", error);
@@ -360,4 +515,5 @@ export const deleteAllModules = async (req, res) => {
     });
   }
 };
+
 
