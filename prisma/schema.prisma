@@ -7,28 +7,51 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//
+
+// e.g., SuperAdmin, GlobalSettings, etc.
+//
+
+model SuperAdmin {
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+
+  name     String?
+  isActive Boolean @default(true)
+
+  failedLoginCount Int       @default(0)
+  lockedUntil      DateTime?
+
+  lastLogin DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  auditLogs     AuditLog[]
+  loginAttempts LoginAttempt[]
+}
+
 //////////////////////////////
 // TENANT
 //////////////////////////////
+
 model Tenant {
-  id        String     @id @default(uuid())
-  name      String
-  type      TenantType
+  id   String     @id @default(uuid())
+  name String
+  type TenantType
 
-  // Platform control (Super Admin)
-  isActive  Boolean    @default(true)
-  createdAt DateTime  @default(now())
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
 
-  // Relations
   users         User[]
   roles         Role[]
   modules       TenantModule[]
   subscriptions Subscription[]
   auditLogs     AuditLog[]
+  loginAttempts LoginAttempt[]
 
-  // Tenant-managed
-  profile   TenantProfile?
-  settings  TenantSetting[]
+  profile  TenantProfile?
+  settings TenantSetting[]
 }
 
 enum TenantType {
@@ -46,17 +69,17 @@ enum TenantType {
 // TENANT PROFILE (Branding)
 //////////////////////////////
 model TenantProfile {
-  id        String @id @default(uuid())
-  tenantId  String @unique
+  id       String @id @default(uuid())
+  tenantId String @unique
 
   logoUrl    String?
   faviconUrl String?
   themeColor String?
 
-  email     String?
-  phone     String?
-  address   String?
-  website   String?
+  email   String?
+  phone   String?
+  address String?
+  website String?
 
   updatedAt DateTime @updatedAt
 
@@ -84,30 +107,42 @@ model User {
   email    String
   password String
 
-  tenantId String?
+  name     String?
+  isActive Boolean @default(true)
+
+  failedLoginCount Int       @default(0)
+  lockedUntil      DateTime?
+
+  tenantId String
   roleId   String?
 
-  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tenant Tenant? @relation(fields: [tenantId], references: [id])
-  role   Role?   @relation(fields: [roleId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role   Role?  @relation(fields: [roleId], references: [id])
+
+  auditLogs     AuditLog[]
+  loginAttempts LoginAttempt[]
 
   @@unique([email, tenantId])
+  @@index([tenantId])
 }
 
 //////////////////////////////
 // ROLES & PERMISSIONS (RBAC)
 //////////////////////////////
 model Role {
-  id   String @id @default(uuid())
-  name String
-
+  id       String @id @default(uuid())
+  name     String
   tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   users       User[]
   permissions RolePermission[]
+
+  @@unique([name, tenantId])
 }
 
 model Permission {
@@ -126,23 +161,23 @@ model RolePermission {
 
   @@id([roleId, permissionId])
 }
+
 //////////////////////////////
 // MODULE SYSTEM (UPDATED)
 //////////////////////////////
 model Module {
-  id        String   @id @default(uuid())
-  key       String   @unique
-  name      String
-  isCommon  Boolean  @default(false)
+  id       String  @id @default(uuid())
+  key      String  @unique
+  name     String
+  isCommon Boolean @default(false)
 
-  isDeleted Boolean  @default(false)
+  isDeleted Boolean   @default(false)
   deletedAt DateTime?
 
   tenants     TenantModule[]
   planModules PlanModule[]
   tenantTypes ModuleTenantType[]
 }
-
 
 model ModuleTenantType {
   moduleId   String
@@ -156,25 +191,35 @@ model ModuleTenantType {
 model TenantModule {
   tenantId String
   moduleId String
-  enabled  Boolean @default(true)
+
+  enabled   Boolean      @default(true)
+  source    ModuleSource @default(PLAN)
+  limit     Int?
+  expiresAt DateTime?
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   module Module @relation(fields: [moduleId], references: [id], onDelete: Restrict)
 
   @@id([tenantId, moduleId])
+  @@index([tenantId])
+  @@index([moduleId])
 }
 
-
-
+enum ModuleSource {
+  PLAN // from subscription plan
+  ADDON // purchased separately
+  TRIAL // temporary
+  MANUAL // admin override
+}
 
 //////////////////////////////
 // SUBSCRIPTION & BILLING
 //////////////////////////////
 model Plan {
   id       String  @id @default(uuid())
-  name     String  @unique      // TRIAL | BASIC | PRO
-  price    Int                 // paise
-  duration Int                 // days
+  name     String  @unique // TRIAL | BASIC | PRO
+  price    Int // paise
+  duration Int // days
   isActive Boolean @default(true)
 
   modules       PlanModule[]
@@ -202,8 +247,9 @@ model Subscription {
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   plan   Plan   @relation(fields: [planId], references: [id], onDelete: Restrict)
-}
 
+  @@index([tenantId])
+}
 
 enum SubscriptionStatus {
   ACTIVE
@@ -215,27 +261,61 @@ enum SubscriptionStatus {
 // AUDIT LOGS (CRITICAL)
 //////////////////////////////
 model AuditLog {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  actorId   String?
-  actorType ActorType   // SUPER_ADMIN | TENANT_USER
-
+  actorType ActorType
   tenantId  String?
-  action    String      // USER_CREATED, TENANT_DISABLED
-  entity    String      // USER, TENANT, MODULE
-  entityId  String?
 
-  meta      Json?
+  // Separate actor FKs (FIX)
+  superAdminId String?
+  userId       String?
+
+  action   String
+  entity   String
+  entityId String?
+  meta     Json?
 
   ipAddress String?
   userAgent String?
 
   createdAt DateTime @default(now())
 
-  tenant Tenant? @relation(fields: [tenantId], references: [id])
+  tenant     Tenant?     @relation(fields: [tenantId], references: [id])
+  superAdmin SuperAdmin? @relation(fields: [superAdminId], references: [id])
+  user       User?       @relation(fields: [userId], references: [id])
 
   @@index([tenantId])
+  @@index([actorType])
   @@index([action])
+}
+
+model LoginAttempt {
+  id String @id @default(uuid())
+
+  actorType ActorType
+  tenantId  String?
+
+  superAdminId String?
+  userId       String?
+
+  email   String
+  success Boolean
+  reason  String?
+
+  ipAddress String?
+  userAgent String?
+  device    String?
+
+  createdAt DateTime @default(now())
+
+  tenant     Tenant?     @relation(fields: [tenantId], references: [id])
+  superAdmin SuperAdmin? @relation(fields: [superAdminId], references: [id])
+  user       User?       @relation(fields: [userId], references: [id])
+
+  @@index([email])
+  @@index([actorType])
+  @@index([tenantId])
+  @@index([createdAt])
 }
 
 enum ActorType {

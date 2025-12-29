@@ -1,6 +1,6 @@
 import prisma from "../../../core/config/db.js";
 import logger from "../../../core/utils/logger.js";
-import { createAuditLog } from "../../../platform/audit/audit.service.js";
+import { writeAuditLog } from "../../../platform/audit/audit.helper.js";
 import { AUDIT_ACTIONS } from "../../../platform/audit/audit.constants.js";
 
 /**
@@ -11,50 +11,51 @@ export const createRole = async (req, res) => {
   try {
     const { name } = req.body;
     const tenantId = req.user.tenantId;
-    const createdBy = req.user?.id ?? null;
+    const actorUserId = req.user.id;
 
-    logger.info(`[createRole] start - user=${createdBy} tenant=${tenantId} name=${name}`);
+    logger.info(
+      `[createRole] start actorUser=${actorUserId} tenant=${tenantId} name=${name}`
+    );
 
     if (!name) {
-      logger.warn(`[createRole] validation failed - missing name user=${createdBy} tenant=${tenantId}`);
-      return res.status(400).json({ message: "Role name required" });
+      return res.status(400).json({
+        success: false,
+        message: "Role name required",
+      });
     }
 
     const role = await prisma.role.create({
-      data: { name, tenantId },
+      data: {
+        name,
+        tenantId,
+      },
     });
 
-    logger.info(`[createRole] success - created role id=${role.id} name=${role.name} tenant=${tenantId}`);
-
-    // Create audit log (non-blocking for main flow)
-    try {
-      await createAuditLog({
-        actorId: createdBy,
-        actorType: "TENANT_USER",
-        tenantId,
-        action: AUDIT_ACTIONS.ROLE_CREATED,
-        entity: "ROLE",
-        entityId: role.id,
-        meta: { name },
-        req,
-      });
-      logger.info(`[createRole] audit logged for role id=${role.id}`);
-    } catch (auditErr) {
-      logger.error(`[createRole] failed to create audit log: ${auditErr.message}`, auditErr);
-    }
+    await writeAuditLog({
+      actorType: "TENANT_USER",
+      userId: actorUserId,
+      tenantId,
+      action: AUDIT_ACTIONS.ROLE_CREATED,
+      entity: "ROLE",
+      entityId: role.id,
+      meta: { name },
+      req,
+    });
 
     res.status(201).json({
       success: true,
       role,
     });
   } catch (err) {
-    logger.error(`[createRole] error creating role: ${err.message}`, err);
+    logger.error(`[createRole] error: ${err.message}`, err);
+
     res.status(500).json({
       success: false,
       message: "Failed to create role",
     });
   }
 };
+
 
 /**
  * TENANT ADMIN
@@ -65,49 +66,157 @@ export const assignPermissionsToRole = async (req, res) => {
     const { roleId } = req.params;
     const { permissions } = req.body;
     const tenantId = req.user.tenantId;
-    const updatedBy = req.user?.id ?? null;
+    const actorUserId = req.user.id;
 
-    logger.info(`[assignPermissionsToRole] start - user=${updatedBy} tenant=${tenantId} roleId=${roleId} permissions=${permissions?.length || 0}`);
+    if (!Array.isArray(permissions)) {
+      return res.status(400).json({
+        success: false,
+        message: "permissions must be an array",
+      });
+    }
 
-    await prisma.rolePermission.deleteMany({
-      where: { roleId },
+    const role = await prisma.role.findFirst({
+      where: {
+        id: roleId,
+        tenantId,
+      },
     });
 
-    await prisma.rolePermission.createMany({
-      data: permissions.map((pid) => ({
-        roleId,
-        permissionId: pid,
+    if (!role) {
+      return res.status(404).json({
+        success: false,
+        message: "Role not found",
+      });
+    }
+
+    await prisma.$transaction([
+      prisma.rolePermission.deleteMany({
+        where: { roleId },
+      }),
+      prisma.rolePermission.createMany({
+        data: permissions.map((permissionId) => ({
+          roleId,
+          permissionId,
+        })),
+      }),
+    ]);
+
+    await writeAuditLog({
+      actorType: "TENANT_USER",
+      userId: actorUserId,
+      tenantId,
+      action: AUDIT_ACTIONS.ROLE_UPDATED,
+      entity: "ROLE",
+      entityId: roleId,
+      meta: { permissions },
+      req,
+    });
+
+    res.json({
+      success: true,
+      message: "Permissions assigned successfully",
+    });
+  } catch (err) {
+    logger.error(
+      `[assignPermissionsToRole] error: ${err.message}`,
+      err
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to assign permissions",
+    });
+  }
+};
+
+
+/**
+ * TENANT ADMIN
+ * Get all roles with permissions
+ */
+export const getRoles = async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId;
+
+    const roles = await prisma.role.findMany({
+      where: { tenantId },
+      orderBy: { name: "asc" },
+      include: {
+        permissions: {
+          include: {
+            permission: {
+              select: {
+                id: true,
+                key: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      roles: roles.map((role) => ({
+        id: role.id,
+        name: role.name,
+        permissions: role.permissions.map((rp) => ({
+          id: rp.permission.id,
+          key: rp.permission.key,
+        })),
       })),
     });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch roles",
+    });
+  }
+};
 
-    logger.info(`[assignPermissionsToRole] success - assigned permissions to role id=${roleId} tenant=${tenantId}`);
 
-    // Create audit log (non-blocking for main flow)
-    try {
-      await createAuditLog({
-        actorId: updatedBy,
-        actorType: "TENANT_USER",
+/**
+ * TENANT ADMIN
+ * Get role by ID
+ */
+export const getRoleById = async (req, res) => {
+  try {
+    const { roleId } = req.params;
+    const tenantId = req.user.tenantId;
+
+    const role = await prisma.role.findFirst({
+      where: {
+        id: roleId,
         tenantId,
-        action: AUDIT_ACTIONS.ROLE_UPDATED,
-        entity: "ROLE",
-        entityId: roleId,
-        meta: { permissions },
-        req,
+      },
+      include: {
+        permissions: {
+          include: {
+            permission: true,
+          },
+        },
+      },
+    });
+
+    if (!role) {
+      return res.status(404).json({
+        success: false,
+        message: "Role not found",
       });
-      logger.info(`[assignPermissionsToRole] audit logged for role id=${roleId}`);
-    } catch (auditErr) {
-      logger.error(`[assignPermissionsToRole] failed to create audit log: ${auditErr.message}`, auditErr);
     }
 
     res.json({
       success: true,
-      message: "Permissions assigned",
+      role: {
+        id: role.id,
+        name: role.name,
+        permissions: role.permissions.map((rp) => rp.permission),
+      },
     });
   } catch (err) {
-    logger.error(`[assignPermissionsToRole] error assigning permissions: ${err.message}`, err);
     res.status(500).json({
       success: false,
-      message: "Failed to assign permissions",
+      message: "Failed to fetch role",
     });
   }
 };

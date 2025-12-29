@@ -1,31 +1,49 @@
 import prisma from "../../../core/config/db.js";
 import { uploadImage } from "./upload.service.js";
-import { createAuditLog } from "../../../platform/audit/audit.service.js";
+import { writeAuditLog } from "../../../platform/audit/audit.helper.js";
 import { AUDIT_ACTIONS } from "../../../platform/audit/audit.constants.js";
 import logger from "../../../core/utils/logger.js";
 
 /**
  * 🏫 TENANT ADMIN
- * Upload branding assets
+ * Upload branding assets (logo / favicon)
  */
 export const uploadBranding = async (req, res) => {
   try {
     const tenantId = req.user.tenantId;
-    const userId = req.user?.id ?? null;
+    const actorUserId = req.user.id;
     const file = req.file;
     const { type } = req.body; // logo | favicon
 
-    logger.info(`[uploadBranding] start - user=${userId} tenant=${tenantId} type=${type}`);
+    logger.info(
+      `[uploadBranding] start actorUser=${actorUserId} tenant=${tenantId} type=${type}`
+    );
 
-    if (!file || !type) {
-      logger.warn(`[uploadBranding] validation failed - missing file or type user=${userId} tenant=${tenantId}`);
+    // ---------- Validation ----------
+    if (!file) {
       return res.status(400).json({
         success: false,
-        message: "File and type are required",
+        message: "File is required",
       });
     }
 
-    const folder = `tenants/${tenantId}/branding`;
+    if (!["logo", "favicon"].includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid branding type. Allowed: logo, favicon",
+      });
+    }
+
+    // Optional: file type validation
+    if (!file.mimetype.startsWith("image/")) {
+      return res.status(400).json({
+        success: false,
+        message: "Only image files are allowed",
+      });
+    }
+
+    // ---------- Upload ----------
+    const folder = `tenants/${tenantId}/branding/${type}`;
     const imageUrl = await uploadImage(file, folder);
 
     const updateData =
@@ -36,33 +54,42 @@ export const uploadBranding = async (req, res) => {
     const profile = await prisma.tenantProfile.upsert({
       where: { tenantId },
       update: updateData,
-      create: { tenantId, ...updateData },
+      create: {
+        tenantId,
+        ...updateData,
+      },
     });
 
-    logger.info(`[uploadBranding] success - updated ${type} for tenant=${tenantId}`);
+    // ---------- Audit ----------
+    await writeAuditLog({
+      actorType: "TENANT_USER",
+      userId: actorUserId,
+      tenantId,
+      action: AUDIT_ACTIONS.TENANT_BRANDING_UPDATED,
+      entity: "TENANT_PROFILE",
+      entityId: profile.id,
+      meta: {
+        type,
+        imageUrl,
+      },
+      req,
+    });
 
-    // 🔍 Audit
-    try {
-      await createAuditLog({
-        actorType: "TENANT_USER",
-        tenantId,
-        action: AUDIT_ACTIONS.TENANT_BRANDING_UPDATED,
-        entity: "TENANT_PROFILE",
-        entityId: profile.id,
-        meta: { type, imageUrl },
-        req,
-      });
-      logger.info(`[uploadBranding] audit logged for profile id=${profile.id}`);
-    } catch (auditErr) {
-      logger.error(`[uploadBranding] failed to create audit log: ${auditErr.message}`, auditErr);
-    }
+    logger.info(
+      `[uploadBranding] success tenant=${tenantId} type=${type}`
+    );
 
     res.json({
       success: true,
       imageUrl,
+      profile,
     });
   } catch (err) {
-    logger.error(`[uploadBranding] error: ${err.message}`, err);
+    logger.error(
+      `[uploadBranding] error: ${err.message}`,
+      err
+    );
+
     res.status(500).json({
       success: false,
       message: "Failed to upload branding",

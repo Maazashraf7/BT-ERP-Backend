@@ -193,36 +193,74 @@ const prisma = new PrismaClient();
 
 // console.log("✅ Role permissions assigned");
 
-const COMMON_MODULES = [
-  // { key: "dashboard", name: "Dashboard" },
-  { key: "profile", name: "Profile" },
-  { key: "users", name: "User Management" },
-  { key: "roles", name: "Role & Permissions" },
-  { key: "settings", name: "Settings" },
-  { key: "notifications", name: "Notifications" },
-  { key: "audit_logs", name: "Audit Logs" },
-  { key: "support", name: "Support" },
-];
+// const COMMON_MODULES = [
+//   // { key: "dashboard", name: "Dashboard" },
+//   { key: "profile", name: "Profile" },
+//   { key: "users", name: "User Management" },
+//   { key: "roles", name: "Role & Permissions" },
+//   { key: "settings", name: "Settings" },
+//   { key: "notifications", name: "Notifications" },
+//   { key: "audit_logs", name: "Audit Logs" },
+//   { key: "support", name: "Support" },
+// ];
 
-async function seedCommonModules() {
-  for (const mod of COMMON_MODULES) {
-    await prisma.module.upsert({
-      where: { key: mod.key },
-      update: {
-        isCommon: true,
+// async function seedCommonModules() {
+//   for (const mod of COMMON_MODULES) {
+//     await prisma.module.upsert({
+//       where: { key: mod.key },
+//       update: {
+//         isCommon: true,
        
-      },
-      create: {
-        key: mod.key,
-        name: mod.name,
-        isCommon: true,
+//       },
+//       create: {
+//         key: mod.key,
+//         name: mod.name,
+//         isCommon: true,
        
-      },
-    });
+//       },
+//     });
+//   }
+
+//   console.log("✅ Common modules seeded");
+// }
+// seedCommonModules()
+//   .catch(console.error)
+//   .finally(() => prisma.$disconnect());
+
+
+
+
+async function main() {
+  const email = "admin@platform.com";
+
+  // const superAdminPassword = "SuperAdmin@123";
+
+// const hashedPassword = await bcrypt.hash(superAdminPassword, 10);
+
+  const existing = await prisma.superAdmin.findUnique({
+    where: { email },
+  });
+
+  if (existing) {
+    console.log("SuperAdmin already exists");
+    return;
   }
 
-  console.log("✅ Common modules seeded");
+  const hashedPassword = await bcrypt.hash("SAdmin@123", 10);
+
+  await prisma.superAdmin.create({
+    data: {
+      email,
+
+      password: hashedPassword,
+      name: "Platform Super Admin",
+      isActive: true,
+    },
+  });
+
+  console.log("SuperAdmin seeded successfully");
 }
-seedCommonModules()
+
+main()
   .catch(console.error)
   .finally(() => prisma.$disconnect());

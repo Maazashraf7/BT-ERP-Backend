@@ -74,3 +74,34 @@ export const upsertTenantProfile = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to update tenant profile" });
   }
 };
+
+/**
+ * TENANT ADMIN
+ * Get Tenant Profile
+ */
+export const getTenantProfile = async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId;
+
+    const profile = await prisma.tenantProfile.findUnique({
+      where: { tenantId },
+    });
+
+    // Profile may not exist yet (first-time setup)
+    res.json({
+      success: true,
+      profile: profile ?? null,
+    });
+  } catch (error) {
+    logger.error(
+      `[getTenantProfile] error: ${error.message}`,
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch tenant profile",
+    });
+  }
+};
+

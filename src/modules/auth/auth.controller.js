@@ -2,15 +2,17 @@ import prisma from "../../core/config/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCK_TIME_MINUTES = 15;
+
 export const tenantLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1️⃣ Find tenant user (must have tenantId)
+    // 1️⃣ Find tenant user
     const user = await prisma.user.findFirst({
       where: {
         email,
-        tenantId: { not: null },
         isActive: true,
       },
       include: {
@@ -19,23 +21,80 @@ export const tenantLogin = async (req, res) => {
       },
     });
 
+    // helper to record login attempt
+    const recordAttempt = async (success, reason) => {
+      await prisma.loginAttempt.create({
+        data: {
+          actorType: "TENANT_USER",
+          userId: user?.id,
+          tenantId: user?.tenantId,
+          email,
+          success,
+          reason,
+          ipAddress: req.ip,
+          userAgent: req.headers["user-agent"],
+        },
+      });
+    };
+
     if (!user) {
+      await recordAttempt(false, "INVALID_EMAIL");
       return res.status(401).json({
         success: false,
         message: "Invalid credentials",
       });
     }
 
-    // 2️⃣ Verify password
+    // 2️⃣ Check account lock
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      await recordAttempt(false, "ACCOUNT_LOCKED");
+      return res.status(423).json({
+        success: false,
+        message: "Account is temporarily locked. Try again later.",
+      });
+    }
+
+    // 3️⃣ Verify password
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
+      const failedCount = user.failedLoginCount + 1;
+
+      const updateData = {
+        failedLoginCount: failedCount,
+      };
+
+      if (failedCount >= MAX_FAILED_ATTEMPTS) {
+        updateData.lockedUntil = new Date(
+          Date.now() + LOCK_TIME_MINUTES * 60 * 1000
+        );
+      }
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: updateData,
+      });
+
+      await recordAttempt(false, "INVALID_PASSWORD");
+
       return res.status(401).json({
         success: false,
         message: "Invalid credentials",
       });
     }
 
-    // 3️⃣ Create TENANT JWT
+    // 4️⃣ Successful login → reset counters
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        failedLoginCount: 0,
+        lockedUntil: null,
+      },
+    });
+
+    await recordAttempt(true, "LOGIN_SUCCESS");
+
+    // 5️⃣ Create TENANT JWT
     const token = jwt.sign(
       {
         userId: user.id,
@@ -47,7 +106,6 @@ export const tenantLogin = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // 4️⃣ Response
     res.json({
       success: true,
       message: "Login successful",
@@ -55,7 +113,7 @@ export const tenantLogin = async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role.name,
+        role: user.role?.name,
         type: "TENANT_USER",
       },
       tenant: {
@@ -77,9 +135,6 @@ export const tenantRegister = async (req, res) => {
   try {
     const { tenantName, tenantType, email, password } = req.body;
 
-    // -----------------------------
-    // 1. Validate input
-    // -----------------------------
     if (!tenantName || !tenantType || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -87,9 +142,7 @@ export const tenantRegister = async (req, res) => {
       });
     }
 
-    // -----------------------------
-    // 2. Check if user already exists
-    // -----------------------------
+    // 1️⃣ Check if email already exists globally
     const existingUser = await prisma.user.findFirst({
       where: { email },
     });
@@ -101,9 +154,7 @@ export const tenantRegister = async (req, res) => {
       });
     }
 
-    // -----------------------------
-    // 3. Create Tenant
-    // -----------------------------
+    // 2️⃣ Create Tenant
     const tenant = await prisma.tenant.create({
       data: {
         name: tenantName,
@@ -111,9 +162,7 @@ export const tenantRegister = async (req, res) => {
       },
     });
 
-    // -----------------------------
-    // 4. Create Admin Role
-    // -----------------------------
+    // 3️⃣ Create Admin Role
     const adminRole = await prisma.role.create({
       data: {
         name: "Admin",
@@ -121,9 +170,7 @@ export const tenantRegister = async (req, res) => {
       },
     });
 
-    // -----------------------------
-    // 5. Create Admin User
-    // -----------------------------
+    // 4️⃣ Create Admin User
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
@@ -135,16 +182,18 @@ export const tenantRegister = async (req, res) => {
       },
     });
 
-    // -----------------------------
-    // 6. Assign TRIAL Subscription
-    // -----------------------------
+    // 5️⃣ Assign TRIAL Subscription
     const trialPlan = await prisma.plan.findFirst({
       where: { name: "TRIAL", isActive: true },
     });
 
+    if (!trialPlan) {
+      throw new Error("TRIAL plan not configured");
+    }
+
     const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(startDate.getDate() + trialPlan.duration);
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + trialPlan.duration);
 
     await prisma.subscription.create({
       data: {
@@ -156,9 +205,7 @@ export const tenantRegister = async (req, res) => {
       },
     });
 
-    // -----------------------------
-    // 7. Enable Plan Modules
-    // -----------------------------
+    // 6️⃣ Enable Plan Modules
     const planModules = await prisma.planModule.findMany({
       where: { planId: trialPlan.id },
     });
@@ -169,13 +216,11 @@ export const tenantRegister = async (req, res) => {
           tenantId: tenant.id,
           moduleId: pm.moduleId,
           enabled: true,
+          source: "PLAN",
         },
       });
     }
 
-    // -----------------------------
-    // RESPONSE
-    // -----------------------------
     res.status(201).json({
       success: true,
       message: "Tenant registered successfully",
@@ -196,3 +241,4 @@ export const tenantRegister = async (req, res) => {
     });
   }
 };
+
