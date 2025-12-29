@@ -1,4 +1,4 @@
-import prisma from "../core/config/db.js";
+import prisma from "../config/db.js";
 
 export const requirePermission = (permissionKey) => {
   return async (req, res, next) => {

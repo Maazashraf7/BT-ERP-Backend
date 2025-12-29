@@ -103,41 +103,42 @@ export const updateUser = async (req, res) => {
 };
 
 
-export const deleteUser = async (req, res) => {
+/**
+ * TENANT ADMIN
+ * Restore user
+ */
+export const restoreUser = async (req, res) => {
   try {
     const { userId } = req.params;
     const tenantId = req.user.tenantId;
 
-    const user = await prisma.user.findFirst({
-      where: { id: userId, tenantId },
-    });
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
     await prisma.user.update({
       where: { id: userId },
-      data: {
-        isActive: false,
-      },
+      data: { isActive: true },
     });
 
     await writeAuditLog({
       actorType: "TENANT_USER",
       userId: req.user.id,
       tenantId,
-      action: "USER_SOFT_DELETED",
+      action: "USER_RESTORED",
       entity: "USER",
       entityId: userId,
       req,
     });
 
-    res.json({ success: true, message: "User deactivated" });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Delete failed" });
+    res.json({
+      success: true,
+      message: "User restored successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to restore user",
+    });
   }
 };
+
   
 export const bulkCreateUsers = async (req, res) => {
   try {
@@ -182,7 +183,8 @@ export const bulkCreateUsers = async (req, res) => {
 };
 
 
-export const getUser = async (req, res) => {
+
+export const getUsers = async (req, res) => {
   try {
     const { userId } = req.params;
     const tenantId = req.user.tenantId;
@@ -244,3 +246,237 @@ export const getUser = async (req, res) => {
     });
   }
 };
+
+/**
+ * TENANT ADMIN
+ * List users
+ */
+export const listUsers = async (req, res) => {
+  try {
+    const tenantId = req.user.tenantId;
+    const users = await prisma.user.findMany({
+      where: { tenantId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        isActive: true,
+
+        role: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+
+        failedLoginCount: true,
+        lockedUntil: true,
+
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.json({
+      success: true,
+      users,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch users",
+    });
+  }
+};
+
+/** * TENANT ADMIN
+ * Get user details
+ */
+export const getUserDetails = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const tenantId = req.user.tenantId;
+
+    const user = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        tenantId,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        isActive: true,
+
+        role: {
+          select: {
+            id: true,
+            name: true,
+          },
+          },
+        failedLoginCount: true,
+        lockedUntil: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      user,
+    });
+  }  catch (error) {
+    console.error("GET USER ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user",
+    });
+  }
+};
+
+
+/**
+ * TENANT ADMIN
+ * Activate / Deactivate user
+ */
+export const toggleUserStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { isActive } = req.body;
+    const tenantId = req.user.tenantId;
+    const actorUserId = req.user.id;
+
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "isActive must be boolean",
+      });
+    }
+
+    // Prevent self-disable
+    if (userId === actorUserId) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot change your own status",
+      });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        tenantId,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { isActive },
+    });
+
+    await writeAuditLog({
+      actorType: "TENANT_USER",
+      userId: actorUserId,
+      tenantId,
+      action: isActive ? "USER_ACTIVATED" : "USER_DEACTIVATED",
+      entity: "USER",
+      entityId: userId,
+      meta: { isActive },
+      req,
+    });
+
+    res.json({
+      success: true,
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        isActive: updatedUser.isActive,
+      },
+    });
+  } catch (error) {
+    console.error("TOGGLE USER STATUS ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to toggle user status",
+    });
+  }
+};
+
+/**
+ * TENANT ADMIN
+ * Soft delete user
+ */
+export const deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const tenantId = req.user.tenantId;
+    const actorUserId = req.user.id;
+
+    // Prevent self-delete
+    if (userId === actorUserId) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot delete your own account",
+      });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        tenantId,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isActive: false,
+      },
+    });
+
+    await writeAuditLog({
+      actorType: "TENANT_USER",
+      userId: actorUserId,
+      tenantId,
+      action: "USER_SOFT_DELETED",
+      entity: "USER",
+      entityId: userId,
+      req,
+    });
+
+    res.json({
+      success: true,
+      message: "User deactivated successfully",
+    });
+  } catch (error) {
+    console.error("DELETE USER ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete user",
+    });
+  }
+};
+
+  
+
+  
+
