@@ -33,6 +33,8 @@ import tenantSettingsRoutes from "./modules/admin/settings/settings.routes.js";
 import tenantBrandingRoutes from "./modules/admin/branding/branding.routes.js";
 import adminDashboardRoutes from "./modules/admin/dashboard/dashboard.routes.js";
 import  adminSidebarRoutes from "./modules/sidebar/sidebar.routes.js";
+import auditRoutes from "./modules/audit/audit.routes.js";
+
 
 
 // -----------------------------
@@ -107,6 +109,7 @@ app.use(`${API_V1}/admin/tenant-settings`, tenantSettingsRoutes);
 app.use(`${API_V1}/admin/tenant/branding`, tenantBrandingRoutes);
 app.use(`${API_V1}/admin/dashboard`, adminDashboardRoutes);
 app.use(`${API_V1}/admin/sidebar`, adminSidebarRoutes);
+app.use(`${API_V1}/`, auditRoutes);
 // -----------------------------
 // 404 Handler
 // -----------------------------

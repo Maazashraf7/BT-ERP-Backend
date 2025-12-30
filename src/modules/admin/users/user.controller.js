@@ -61,44 +61,173 @@ export const createUser = async (req, res) => {
   }
 };
 
-export const updateUser = async (req, res) => {
+
+/**
+ * Update user by admin
+ */
+export const updateUserByAdmin = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { email, roleId, isActive } = req.body;
+    const { roleId, isActive } = req.body;
 
     const tenantId = req.user.tenantId;
+    const adminId = req.user.id;
 
-    const user = await prisma.user.findFirst({
-      where: { id: userId, tenantId },
-    });
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+    // ---------- Validate input ----------
+    if (roleId === undefined && isActive === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "Nothing to update",
+      });
     }
 
-    const updated = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        email,
-        roleId,
-        isActive,
+    // ---------- Fetch user ----------
+    const user = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        tenantId,
       },
     });
 
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // ❌ Prevent admin deactivating themselves
+    if (user.id === adminId && isActive === false) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot deactivate your own account",
+      });
+    }
+
+    // ---------- Build update payload ----------
+    const updateData = {};
+    const changedFields = [];
+
+    if (roleId !== undefined) {
+      updateData.roleId = roleId;
+      changedFields.push("roleId");
+    }
+
+    if (isActive !== undefined) {
+      updateData.isActive = isActive;
+      changedFields.push("isActive");
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    // ---------- Audit Log ----------
     await writeAuditLog({
       actorType: "TENANT_USER",
-      userId: req.user.id,
+      userId: adminId,
       tenantId,
-      action: "USER_UPDATED",
+      action: "USER_UPDATED_BY_ADMIN",
       entity: "USER",
       entityId: userId,
-      meta: { email, roleId, isActive },
+      meta: {
+        updatedFields: changedFields,
+        values: updateData,
+      },
       req,
     });
 
-    res.json({ success: true, user: updated });
-  } catch (err) {
-    res.status(500).json({ success: false, message: "Update failed" });
+    res.json({
+      success: true,
+      message: "User updated successfully",
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        roleId: updatedUser.roleId,
+        isActive: updatedUser.isActive,
+      },
+    });
+  } catch (error) {
+    console.error("UPDATE USER BY ADMIN ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update user",
+    });
+  }
+};
+
+
+
+
+/**
+ * TENANT USER
+ * Update own profile
+ */
+export const updateMyProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const tenantId = req.user.tenantId;
+    const { name, password } = req.body;
+
+    const updateData = {};
+    const changedFields = [];
+
+    // Update name
+    if (name !== undefined) {
+      updateData.name = name;
+      changedFields.push("name");
+    }
+
+    // Update password
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 12);
+      updateData.failedLoginCount = 0;
+      updateData.lockedUntil = null;
+      changedFields.push("password");
+    }
+
+    if (changedFields.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No fields provided to update",
+      });
+    }
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    // 🔍 Audit Log (NON-BLOCKING)
+    await writeAuditLog({
+      actorType: "TENANT_USER",
+      userId,
+      tenantId,
+      action: "USER_PROFILE_UPDATED",
+      entity: "USER",
+      entityId: userId,
+      meta: {
+        updatedFields: changedFields,
+      },
+      req,
+    });
+
+    res.json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name || "User",
+      },
+    });
+  } catch (error) {
+    console.error("UPDATE MY PROFILE ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Profile update failed",
+    });
   }
 };
 
