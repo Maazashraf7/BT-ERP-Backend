@@ -1,140 +1,66 @@
 import prisma from "../../core/config/db.js";
+import { buildSidebar } from "../../core/ui/ui.sidebar.builder.js";
+import { buildDashboard } from "../admin/dashboard/dashboard.builder.js";
 
-export const getMeConfig = async (req, res) => {
+export const getMyUI = async (req, res) => {
   try {
-    const { userId, tenantId, roleId } = req.user;
+    const { tenantId, roleId, permissions, tenant } = req.user;
 
-    // ----------------------------------
-    // 1️⃣ USER + TENANT
-    // ----------------------------------
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        role: true,
-        tenant: true,
-      },
-    });
+    // 🔍 DEBUG (temporary)
+    console.log("PERMISSIONS:", permissions);
 
-    if (!user || !user.tenant) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid tenant context",
-      });
-    }
-
-    // ----------------------------------
-    // 2️⃣ ACTIVE SUBSCRIPTION
-    // ----------------------------------
-    const subscription = await prisma.subscription.findFirst({
+    /**
+     * 1️⃣ Resolve enabled modules FIRST
+     * (must come before any usage)
+     */
+    const tenantModules = await prisma.tenantModule.findMany({
       where: {
         tenantId,
-        status: "ACTIVE",
-        endDate: { gt: new Date() },
+        enabled: true,
       },
       include: {
-        plan: {
-          include: {
-            modules: {
-              include: {
-                module: true,
-              },
-            },
-          },
-        },
+        module: true,
       },
     });
 
-    const hasActiveSubscription = !!subscription;
-
-    // ----------------------------------
-    // 3️⃣ ENABLED MODULES
-    // ----------------------------------
-    let modules = [];
-
-    if (hasActiveSubscription) {
-      modules = subscription.plan.modules.map((pm) => ({
-        key: pm.module.key,
-        name: pm.module.name,
-      }));
-    }
-
-    // ----------------------------------
-    // 4️⃣ ROLE PERMISSIONS
-    // ----------------------------------
-    const rolePermissions = await prisma.rolePermission.findMany({
-      where: { roleId },
-      include: {
-        permission: true,
-      },
-    });
-
-    const permissions = rolePermissions.map(
-      (rp) => rp.permission.key
+    const enabledModules = tenantModules.map(
+      (tm) => tm.module.key
     );
 
-    // ----------------------------------
-    // 5️⃣ UI CONFIG (SIDEBAR)
-    // ----------------------------------
-    const sidebar = modules.map((m) => ({
-      key: m.key,
-      label: m.name,
-      icon: resolveIcon(m.key),
-      path: `/app/${m.key}`,
-    }));
+    // 🔍 DEBUG (temporary)
+    console.log("ENABLED MODULES:", enabledModules);
 
-    // ----------------------------------
-    // RESPONSE
-    // ----------------------------------
-    res.json({
-      success: true,
-
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role?.name,
-      },
-
-      tenant: {
-        id: user.tenant.id,
-        name: user.tenant.name,
-        type: user.tenant.type,
-      },
-
-      subscription: hasActiveSubscription
-        ? {
-            plan: subscription.plan.name,
-            status: subscription.status,
-            expiresAt: subscription.endDate,
-          }
-        : null,
-
-      modules,
+    /**
+     * 2️⃣ Build sidebar
+     */
+    const sidebar = buildSidebar({
       permissions,
+      tenantType: tenant.type,
+      enabledModules,
+    });
 
+    /**
+     * 3️⃣ Build dashboard
+     */
+    const dashboard = await buildDashboard({
+      tenantId,
+      roleId,
+      permissions,
+      enabledModules,
+    });
+
+    return res.json({
+      success: true,
       ui: {
         sidebar,
+        dashboard,
       },
     });
-  } catch (error) {
-    console.error("ME CONFIG ERROR:", error);
-    res.status(500).json({
+  } catch (err) {
+    console.error("ME/UI ERROR:", err);
+    return res.status(500).json({
       success: false,
-      message: "Failed to load configuration",
+      message: "Failed to load UI",
     });
   }
 };
-
-// ----------------------------------
-// ICON RESOLVER (CENTRALIZED)
-// ----------------------------------
-function resolveIcon(key) {
-  const map = {
-    students: "users",
-    attendance: "calendar-check",
-    fees: "wallet",
-    exams: "file-text",
-    batches: "layers",
-  };
-
-  return map[key] || "grid";
-}

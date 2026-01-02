@@ -230,37 +230,22 @@ const prisma = new PrismaClient();
 
 
 
-async function main() {
-  const email = "admin@platform.com";
-
-  // const superAdminPassword = "SuperAdmin@123";
-
-// const hashedPassword = await bcrypt.hash(superAdminPassword, 10);
-
-  const existing = await prisma.superAdmin.findUnique({
-    where: { email },
-  });
-
-  if (existing) {
-    console.log("SuperAdmin already exists");
-    return;
-  }
-
-  const hashedPassword = await bcrypt.hash("SAdmin@123", 10);
-
-  await prisma.superAdmin.create({
-    data: {
-      email,
-
-      password: hashedPassword,
-      name: "Platform Super Admin",
-      isActive: true,
+await prisma.uIWidget.createMany({
+  data: [
+    {
+      key: "TOTAL_USERS",
+      title: "Total Users",
+      type: "stat",
+      permission: "VIEW_USERS",
+      moduleKey: "USERS",
     },
-  });
-
-  console.log("SuperAdmin seeded successfully");
-}
-
-main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+    {
+      key: "RECENT_ACTIVITIES",
+      title: "Recent Activities",
+      type: "list",
+      permission: "VIEW_AUDIT_LOGS",
+      moduleKey: "USERS",
+    },
+  ],
+  skipDuplicates: true,
+});

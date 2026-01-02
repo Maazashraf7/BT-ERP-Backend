@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Permission" ADD COLUMN     "action" TEXT,
+ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "domain" TEXT,
+ADD COLUMN     "isSystem" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "moduleKey" TEXT;

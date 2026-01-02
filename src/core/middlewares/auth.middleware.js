@@ -13,12 +13,11 @@ export const authMiddleware = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // ✅ Consistent type
+    // ✅ Enforce tenant user
     if (decoded.type !== "TENANT_USER") {
       return res.status(403).json({ message: "Invalid access type" });
     }
 
-    // 🔍 Fetch fresh user data
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       include: {
@@ -32,8 +31,6 @@ export const authMiddleware = async (req, res, next) => {
         },
       },
     });
-    console.log(req.user);
-
 
     if (!user || !user.isActive) {
       return res.status(401).json({ message: "User inactive" });
@@ -43,21 +40,32 @@ export const authMiddleware = async (req, res, next) => {
       return res.status(403).json({ message: "Tenant disabled" });
     }
 
-    // ✅ DEFINE req.user CONTRACT (VERY IMPORTANT)
+    // 🔥 SAFE PERMISSION EXTRACTION
+    const permissions = user.role
+      ? user.role.permissions.map((rp) => rp.permission.key)
+      : [];
+
+    // ✅ DEFINE req.user (FINAL CONTRACT)
     req.user = {
       id: user.id,
       tenantId: user.tenantId,
       roleId: user.roleId,
-      role: user.role.name,
-      permissions: user.role.permissions.map(
-        (rp) => rp.permission.key
-      ),
+      role: user.role?.name ?? null,
+      permissions,
       tenant: {
         id: user.tenant.id,
-        type: user.tenant.type,   // 🔥 REQUIRED BY SIDEBAR
+        type: user.tenant.type,
         name: user.tenant.name,
       },
     };
+
+    // ✅ DEBUG (TEMP – REMOVE LATER)
+    console.log("AUTH USER:", {
+      id: req.user.id,
+      role: req.user.role,
+      permissions: req.user.permissions,
+      tenantType: req.user.tenant.type,
+    });
 
     next();
   } catch (err) {

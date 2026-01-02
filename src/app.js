@@ -18,6 +18,7 @@ import platformAuditRoutes from "./platform/audit/audit.routes.js";
 import modulesRoutes from "./platform/modules/module.routes.js";
 import plans from "./platform/plans/plan.routes.js";
 import tenantModuleRoutes from "./modules/tenantModules/tenantModule.routes.js";
+import superAdminPermission from "./platform/permission/permission.routes.js";
 
 
 
@@ -93,6 +94,7 @@ app.use(`${API_V1}/audit-logs`, platformAuditRoutes);
 app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
 app.use(`${API_V1}/super-admin/plans`, plans);
 app.use(`${API_V1}/admin/tenant-modules`, tenantModuleRoutes);
+app.use(`${API_V1}/super-admin/permissions`, superAdminPermission);
   
 
 // -----------------------------

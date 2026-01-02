@@ -52,6 +52,7 @@ model Tenant {
 
   profile  TenantProfile?
   settings TenantSetting[]
+  widgets  TenantWidget[]
 }
 
 enum TenantType {
@@ -146,11 +147,20 @@ model Role {
 }
 
 model Permission {
-  id  String @id @default(uuid())
-  key String @unique
+  id        String @id @default(uuid())
+  key       String @unique
+
+  // 🔥 Metadata
+  domain    String?     // orders, menu, users, roles
+  action    String?     // view, create, update, delete
+  moduleKey String?     // RESTAURANT_ORDERS, USERS, ATTENDANCE
+
+  isSystem  Boolean @default(true)
+  createdAt DateTime @default(now())
 
   roles RolePermission[]
 }
+
 
 model RolePermission {
   roleId       String
@@ -210,6 +220,38 @@ enum ModuleSource {
   ADDON // purchased separately
   TRIAL // temporary
   MANUAL // admin override
+}
+
+model UIWidget {
+  key        String @id
+  title      String
+  type       String
+  permission String
+  moduleKey  String
+
+  @@index([permission])
+  @@index([moduleKey])
+}
+
+model TenantWidget {
+  tenantId  String
+  widgetKey String
+  enabled   Boolean @default(true)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, widgetKey])
+}
+
+model DashboardLayout {
+  tenantId   String
+  roleId     String
+  uiVersion  String
+  layoutKey  String
+  breakpoint String
+  layout     Json
+
+  @@unique([tenantId, roleId, uiVersion, layoutKey, breakpoint])
 }
 
 //////////////////////////////
