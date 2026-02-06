@@ -2,6 +2,7 @@ import prisma from "../../../core/config/db.js";
 import logger from "../../../core/utils/logger.js";
 import { writeAuditLog } from "../../../platform/audit/audit.helper.js";
 import { AUDIT_ACTIONS } from "../../../platform/audit/audit.constants.js";
+import { clearRoleCache } from "../../../core/cache/permission.cache.js";
 
 /**
  * TENANT ADMIN
@@ -56,78 +57,6 @@ export const createRole = async (req, res) => {
   }
 };
 
-
-/**
- * TENANT ADMIN
- * Assign permissions to role
- */
-export const assignPermissionsToRole = async (req, res) => {
-  try {
-    const { roleId } = req.params;
-    const { permissions } = req.body;
-    const tenantId = req.user.tenantId;
-    const actorUserId = req.user.id;
-
-    if (!Array.isArray(permissions)) {
-      return res.status(400).json({
-        success: false,
-        message: "permissions must be an array",
-      });
-    }
-
-    const role = await prisma.role.findFirst({
-      where: {
-        id: roleId,
-        tenantId,
-      },
-    });
-
-    if (!role) {
-      return res.status(404).json({
-        success: false,
-        message: "Role not found",
-      });
-    }
-
-    await prisma.$transaction([
-      prisma.rolePermission.deleteMany({
-        where: { roleId },
-      }),
-      prisma.rolePermission.createMany({
-        data: permissions.map((permissionId) => ({
-          roleId,
-          permissionId,
-        })),
-      }),
-    ]);
-
-    await writeAuditLog({
-      actorType: "TENANT_USER",
-      userId: actorUserId,
-      tenantId,
-      action: AUDIT_ACTIONS.ROLE_UPDATED,
-      entity: "ROLE",
-      entityId: roleId,
-      meta: { permissions },
-      req,
-    });
-
-    res.json({
-      success: true,
-      message: "Permissions assigned successfully",
-    });
-  } catch (err) {
-    logger.error(
-      `[assignPermissionsToRole] error: ${err.message}`,
-      err
-    );
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to assign permissions",
-    });
-  }
-};
 
 
 /**
@@ -218,5 +147,93 @@ export const getRoleById = async (req, res) => {
       success: false,
       message: "Failed to fetch role",
     });
+  }
+};
+
+/**
+ * TENANT ADMIN
+ * Update Role
+ */
+export const updateRole = async (req, res) => {
+  try {
+    const { roleId } = req.params;
+    const { name } = req.body;
+    const tenantId = req.user.tenantId;
+    const actorUserId = req.user.id; // Corrected variable name
+
+    if (!name) {
+      return res.status(400).json({ success: false, message: "Role name is required" });
+    }
+
+    const role = await prisma.role.findFirst({
+      where: { id: roleId, tenantId },
+    });
+
+    if (!role) {
+      return res.status(404).json({ success: false, message: "Role not found" });
+    }
+
+    const updatedRole = await prisma.role.update({
+      where: { id: roleId },
+      data: { name },
+    });
+
+    await writeAuditLog({
+      actorType: "TENANT_USER",
+      userId: actorUserId,
+      tenantId,
+      action: AUDIT_ACTIONS.ROLE_UPDATED,
+      entity: "ROLE",
+      entityId: roleId,
+      meta: { name },
+      req,
+    });
+
+    res.json({ success: true, role: updatedRole });
+  } catch (err) {
+    logger.error(`[updateRole] error: ${err.message}`, err);
+    res.status(500).json({ success: false, message: "Failed to update role" });
+  }
+};
+
+/**
+ * TENANT ADMIN
+ * Delete Role
+ */
+export const deleteRole = async (req, res) => {
+  try {
+    const { roleId } = req.params;
+    const tenantId = req.user.tenantId;
+    const actorUserId = req.user.id;
+
+    const role = await prisma.role.findFirst({
+      where: { id: roleId, tenantId },
+    });
+
+    if (!role) {
+      return res.status(404).json({ success: false, message: "Role not found" });
+    }
+
+    await prisma.role.delete({
+      where: { id: roleId },
+    });
+
+    // Clear cache incase this role had permissions
+    clearRoleCache(roleId);
+
+    await writeAuditLog({
+      actorType: "TENANT_USER",
+      userId: actorUserId,
+      tenantId,
+      action: AUDIT_ACTIONS.ROLE_DELETED,
+      entity: "ROLE",
+      entityId: roleId,
+      req,
+    });
+
+    res.json({ success: true, message: "Role deleted successfully" });
+  } catch (err) {
+    logger.error(`[deleteRole] error: ${err.message}`, err);
+    res.status(500).json({ success: false, message: "Failed to delete role" });
   }
 };

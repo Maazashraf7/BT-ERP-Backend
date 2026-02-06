@@ -1,21 +1,30 @@
 import prisma from "../config/db.js";
 
-export const requireActiveSubscription = async (req, res, next) => {
-  const { tenantId } = req.user;
+/**
+ * Middleware to check if the tenant has an active plan.
+ * Since the explicit Subscription model was removed, we check the tenant's relation.
+ */
+export const checkSubscription = async (req, res, next) => {
+  try {
+    const { tenantId } = req.user;
 
-  const sub = await prisma.subscription.findFirst({
-    where: {
-      tenantId,
-      status: "ACTIVE",
-      endDate: { gte: new Date() },
-    },
-  });
-
-  if (!sub) {
-    return res.status(403).json({
-      message: "Subscription expired. Please upgrade your plan.",
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: {
+        subscription_plan: true
+      }
     });
-  }
 
-  next();
+    if (!tenant || !tenant.isActive || !tenant.subscription_planId) {
+      return res.status(403).json({
+        success: false,
+        message: "Active subscription plan required. Please contact support.",
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Subscription check error:", error);
+    res.status(500).json({ success: false, message: "Subscription validation failed" });
+  }
 };

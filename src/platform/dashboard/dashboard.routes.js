@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { getSuperAdminDashboardSummary } from "./dashboard.controller.js";
-import { requireSuperAdmin } from "../../core/middlewares/platformAuth.middleware.js";
+import { authMiddleware } from "../../core/middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.get("/summary", requireSuperAdmin, getSuperAdminDashboardSummary);
+router.get("/summary", authMiddleware, getSuperAdminDashboardSummary);
 
 export default router;

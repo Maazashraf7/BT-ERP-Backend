@@ -1,26 +1,23 @@
 import prisma from "../../core/config/db.js";
 
+/**
+ * SUPER ADMIN DASHBOARD SUMMARY
+ */
 export const getSuperAdminDashboardSummary = async (req, res) => {
   try {
     const now = new Date();
-    const sevenDaysAgo = new Date(now);
-    sevenDaysAgo.setDate(now.getDate() - 7);
-
     const thirtyDaysAgo = new Date(now);
     thirtyDaysAgo.setDate(now.getDate() - 30);
 
-    // 🚀 Parallel queries (IMPORTANT)
+    // 🚀 Parallel queries
     const [
       totalTenants,
       activeTenants,
       inactiveTenants,
       tenantsByType,
       totalUsers,
-      activeSubscriptions,
-      expiringSubscriptions,
+      totalPlans,
       recentTenants,
-      topPlans,
-      topModules,
       recentAudits,
     ] = await Promise.all([
       prisma.tenant.count(),
@@ -34,38 +31,16 @@ export const getSuperAdminDashboardSummary = async (req, res) => {
       }),
 
       prisma.tenant.groupBy({
-        by: ["type"],
-        _count: { type: true },
+        by: ["tenantType"],
+        _count: { tenantType: true },
       }),
 
       prisma.user.count(),
 
-      prisma.subscription.count({
-        where: { status: "ACTIVE" },
-      }),
-
-      prisma.subscription.count({
-        where: {
-          status: "ACTIVE",
-          endDate: {
-            lte: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
-          },
-        },
-      }),
+      prisma.subscription_plan.count(),
 
       prisma.tenant.count({
         where: { createdAt: { gte: thirtyDaysAgo } },
-      }),
-
-      prisma.subscription.groupBy({
-        by: ["planId"],
-        _count: { planId: true },
-      }),
-
-      prisma.tenantModule.groupBy({
-        by: ["moduleId"],
-        where: { enabled: true },
-        _count: { moduleId: true },
       }),
 
       prisma.auditLog.findMany({
@@ -83,8 +58,8 @@ export const getSuperAdminDashboardSummary = async (req, res) => {
           inactive: inactiveTenants,
           newLast30Days: recentTenants,
           byType: tenantsByType.map(t => ({
-            type: t.type,
-            count: t._count.type,
+            type: t.tenantType,
+            count: t._count.tenantType,
           })),
         },
 
@@ -92,14 +67,8 @@ export const getSuperAdminDashboardSummary = async (req, res) => {
           total: totalUsers,
         },
 
-        subscriptions: {
-          active: activeSubscriptions,
-          expiringSoon: expiringSubscriptions,
-        },
-
-        insights: {
-          topPlans,
-          topModules,
+        plans: {
+          total: totalPlans,
         },
 
         activity: {

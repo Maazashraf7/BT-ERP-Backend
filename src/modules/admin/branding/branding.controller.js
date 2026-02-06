@@ -51,13 +51,9 @@ export const uploadBranding = async (req, res) => {
         ? { logoUrl: imageUrl }
         : { faviconUrl: imageUrl };
 
-    const profile = await prisma.tenantProfile.upsert({
-      where: { tenantId },
-      update: updateData,
-      create: {
-        tenantId,
-        ...updateData,
-      },
+    const profile = await prisma.tenant.update({
+      where: { id: tenantId },
+      data: updateData,
     });
 
     // ---------- Audit ----------

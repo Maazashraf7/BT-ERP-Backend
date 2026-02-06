@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "tenant" ADD COLUMN     "role" TEXT NOT NULL DEFAULT 'SUPER_ADMIN';

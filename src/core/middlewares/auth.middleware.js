@@ -2,74 +2,99 @@ import jwt from "jsonwebtoken";
 import prisma from "../config/db.js";
 
 export const authMiddleware = async (req, res, next) => {
-  const auth = req.headers.authorization;
+  const authHeader = req.headers.authorization;
 
-  if (!auth || !auth.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "No token provided" });
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized User" });
   }
 
-  const token = auth.split(" ")[1];
+  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // ✅ Enforce tenant user
-    if (decoded.type !== "TENANT_USER") {
-      return res.status(403).json({ message: "Invalid access type" });
+    if (decoded.type === "SUPER_ADMIN") {
+      // ✅ Handle Super Admin
+      console.log("Auth Debug - Decoded:", decoded);
+      const admin = await prisma.superAdmin.findUnique({
+        where: { id: decoded.userId },
+      });
+      console.log("Auth Debug - Found Admin:", admin ? admin.id : "Not Found");
+
+      if (!admin || !admin.isActive) {
+        return res.status(401).json({ message: "Admin inactive or not found" });
+      }
+
+      req.user = {
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+        type: "SUPER_ADMIN",
+      };
     }
+    else if (decoded.type === "STAFF") {
+      // ✅ Handle Management Staff
+      const staff = await prisma.managementStaff.findUnique({
+        where: { id: decoded.userId },
+      });
 
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      include: {
-        tenant: true,
-        role: {
-          include: {
-            permissions: {
-              include: { permission: true },
-            },
-          },
-        },
-      },
-    });
+      if (!staff || !staff.isActive) {
+        return res.status(401).json({ message: "Staff inactive or not found" });
+      }
 
-    if (!user || !user.isActive) {
-      return res.status(401).json({ message: "User inactive" });
+      req.user = {
+        id: staff.id,
+        tenantId: staff.tenantId,
+        email: staff.email,
+        name: staff.name,
+        role: staff.role,
+        type: "STAFF",
+      };
     }
+    else if (decoded.type === "USER") {
+      // ✅ Handle Regular User (Simplified)
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+      });
 
-    if (!user.tenant || !user.tenant.isActive) {
-      return res.status(403).json({ message: "Tenant disabled" });
+      if (!user || !user.isActive) {
+        return res.status(401).json({ message: "User inactive or not found" });
+      }
+
+      req.user = {
+        id: user.id,
+        tenantId: user.tenantId,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        type: "USER",
+      };
     }
+    else if (decoded.type === "TENANT") {
+      // ✅    Handle Tenant Account Login
+      const tenantId = decoded.tenantId || decoded.userId; // Fallback for various token versions
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+      });
 
-    // 🔥 SAFE PERMISSION EXTRACTION
-    const permissions = user.role
-      ? user.role.permissions.map((rp) => rp.permission.key)
-      : [];
+      if (!tenant || !tenant.isActive) {
+        return res.status(401).json({ message: "Tenant inactive or not found" });
+      }
 
-    // ✅ DEFINE req.user (FINAL CONTRACT)
-    req.user = {
-      id: user.id,
-      tenantId: user.tenantId,
-      roleId: user.roleId,
-      role: user.role?.name ?? null,
-      permissions,
-      tenant: {
-        id: user.tenant.id,
-        type: user.tenant.type,
-        name: user.tenant.name,
-      },
-    };
-
-    // ✅ DEBUG (TEMP – REMOVE LATER)
-    console.log("AUTH USER:", {
-      id: req.user.id,
-      role: req.user.role,
-      permissions: req.user.permissions,
-      tenantType: req.user.tenant.type,
-    });
+      req.user = {
+        id: tenant.id,
+        tenantId: tenant.id,
+        email: tenant.tenantEmail,
+        name: tenant.tenantName,
+        role: tenant.role || "TENANT_ADMIN",
+        type: "TENANT",
+      };
+    }
 
     next();
   } catch (err) {
-    console.error("AUTH ERROR:", err);
+    console.error("Auth Middleware Error:", err);
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };

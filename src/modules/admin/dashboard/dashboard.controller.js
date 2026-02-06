@@ -14,8 +14,7 @@ export const getAdminDashboardSummary = async (req, res) => {
       totalUsers,
       activeUsers,
       totalRoles,
-      enabledModules,
-      subscription,
+      tenant,
       usersByRole,
       recentActivities,
     ] = await Promise.all([
@@ -34,21 +33,12 @@ export const getAdminDashboardSummary = async (req, res) => {
         where: { tenantId },
       }),
 
-      // Enabled modules
-      prisma.tenantModule.count({
-        where: { tenantId, enabled: true },
-      }),
-
-      // Active subscription
-      prisma.subscription.findFirst({
-        where: {
-          tenantId,
-          status: "ACTIVE",
-          endDate: { gte: new Date() },
-        },
+      // Tenant with Plan info
+      prisma.tenant.findUnique({
+        where: { id: tenantId },
         include: {
-          plan: true,
-        },
+          subscription_plan: true
+        }
       }),
 
       // Users grouped by role
@@ -78,14 +68,12 @@ export const getAdminDashboardSummary = async (req, res) => {
         totalUsers,
         activeUsers,
         totalRoles,
-        enabledModules,
       },
-      subscription: subscription
-        ? {
-            plan: subscription.plan.name,
-            expiresAt: subscription.endDate,
-          }
-        : null,
+      tenantDetails: tenant ? {
+        name: tenant.tenantName,
+        type: tenant.tenantType,
+        plan: tenant.subscription_plan?.name ?? "NONE"
+      } : null,
       usersByRole: usersByRole.map((r) => ({
         role: r.name,
         count: r._count.users,

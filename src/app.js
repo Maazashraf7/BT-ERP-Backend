@@ -1,48 +1,33 @@
 import express from "express";
 import cors from "cors";
 
-// -----------------------------
-// Route Imports
-// -----------------------------
-
-
-
-// 🔐 Auth
-import tenantAuthRoutes from "./modules/auth/auth.routes.js";
-import superAdminAuthRoutes from "./platform/auth/auth.routes.js";
-
+// ----------------------------
 // 👑 Super Admin (Platform)
-import tenantRoutes from "./platform/tenants/tenant.routes.js";
 import platformDashboardRoutes from "./platform/dashboard/dashboard.routes.js";
 import platformAuditRoutes from "./platform/audit/audit.routes.js";
 import modulesRoutes from "./platform/modules/module.routes.js";
-import plans from "./platform/plans/plan.routes.js";
-import tenantModuleRoutes from "./modules/tenantModules/tenantModule.routes.js";
-import superAdminPermission from "./platform/permission/permission.routes.js";
 
 
+import superAdminAuthRoutes from "./modules/admin/management/management.routes.js";
+import superAdminTenantRoutes from "./modules/admin/tenants/tenant.routes.js";
+import Subscription_Plan from "./modules/admin/plans/plan.routes.js";
+import { loginTenant } from "./modules/admin/tenants/tenant.controller.js";
+
+
+import permissionRoutes from "./modules/admin/permissions/permission.routes.js"; // Shared or specific?
+import featureRoutes from "./modules/admin/features/features.route.js";
 
 // 🏫 Tenant Admin
-import meRoutes from "./modules/me/me.routes.js";
-// import tenantModuleRoutes from "./modules/modules/module.routes.js";
-// import tenantSettingsRoutes from "./modules/settings/settings.routes.js";
-import permissionRoutes from "./modules/admin/permissions/permission.routes.js";
-import roleRoutes from "./modules/admin/roles/role.routes.js";
-import userRoutes from "./modules/admin/users/user.routes.js";
-import tenantProfileRoutes from "./modules/admin/tenantProfile/tenantProfile.routes.js";
-import tenantSettingsRoutes from "./modules/admin/settings/settings.routes.js";
-import tenantBrandingRoutes from "./modules/admin/branding/branding.routes.js";
-import adminDashboardRoutes from "./modules/admin/dashboard/dashboard.routes.js";
-import  adminSidebarRoutes from "./modules/sidebar/sidebar.routes.js";
-import auditRoutes from "./modules/audit/audit.routes.js";
+import tenantRouter from "./modules/tenant.routes.js";
 
 
+
+// (Cleaned up individual imports)
 
 // -----------------------------
 // App Init
 // -----------------------------
 const app = express();
-
 // -----------------------------
 // CORS
 // -----------------------------
@@ -53,6 +38,12 @@ app.use(
     credentials: true,
   })
 );
+
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log("Headers:", req.headers);
+  next();
+});
 
 // -----------------------------
 // Global Middlewares
@@ -71,47 +62,108 @@ app.get("/", (req, res) => {
   });
 });
 
+app.post("/test-body", (req, res) => {
+  console.log("TEST BODY:", req.body);
+  res.json({ body: req.body });
+});
+
 // =============================
 // API v1 ROUTES
 // =============================
 const API_V1 = "/api/v1";
 
-// -----------------------------
-// 🔐 AUTH
-// -----------------------------
-app.use(`${API_V1}/auth`, tenantAuthRoutes);                 // tenant users
-app.use(`${API_V1}/super-admin/auth`, superAdminAuthRoutes); // super admin
 
-// public plans comparison
-app.use(`${API_V1}/plans`, plans);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // -----------------------------
 // 👑 SUPER ADMIN (PLATFORM)
 // -----------------------------
-app.use(`${API_V1}/super-admin/tenants`, tenantRoutes);
+app.use(`${API_V1}/super-admin/auth`, superAdminAuthRoutes); // Login/Management
+app.use(`${API_V1}/super-admin/tenants`, superAdminTenantRoutes);
+app.use(`${API_V1}/super-admin/subscription`, Subscription_Plan);
+app.use(`${API_V1}/super-admin/features`, featureRoutes);
+
+
+
+
+app.use(`${API_V1}/super-admin/permissions`, permissionRoutes); // Permissions CRUD
 app.use(`${API_V1}/super-admin/dashboard`, platformDashboardRoutes);
 app.use(`${API_V1}/audit-logs`, platformAuditRoutes);
 app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
-app.use(`${API_V1}/super-admin/plans`, plans);
-app.use(`${API_V1}/admin/tenant-modules`, tenantModuleRoutes);
-app.use(`${API_V1}/super-admin/permissions`, superAdminPermission);
-  
+
 
 // -----------------------------
-// 🏫 TENANT ADMIN
+// 🏫 TENANT DYNAMIC ROUTES
 // -----------------------------
-app.use(`${API_V1}/me`, meRoutes);
-// app.use(`${API_V1}/admin/modules`, tenantModuleRoutes);
-// app.use(`${API_V1}/admin/settings`, tenantSettingsRoutes);
-app.use(`${API_V1}/admin/permissions`, permissionRoutes);
-app.use(`${API_V1}/admin/roles`, roleRoutes);
-app.use(`${API_V1}/admin/users`, userRoutes);
-app.use(`${API_V1}/admin/tenant`, tenantProfileRoutes);
-app.use(`${API_V1}/admin/tenant-settings`, tenantSettingsRoutes);
-app.use(`${API_V1}/admin/tenant/branding`, tenantBrandingRoutes);
-app.use(`${API_V1}/admin/dashboard`, adminDashboardRoutes);
-app.use(`${API_V1}/admin/sidebar`, adminSidebarRoutes);
-app.use(`${API_V1}/`, auditRoutes);
+// Mounts all tenant functionality under /api/v1/:tenantName/
+app.post(`${API_V1}/auth/tenant/login`, loginTenant);
+app.use(`${API_V1}/:tenantName`, tenantRouter);
 // -----------------------------
 // 404 Handler
 // -----------------------------
