@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { createUser, getUsers, updateUserByAdmin, deleteUser, bulkCreateUsers, restoreUser, toggleUserStatus, getUserDetails, listUsers, updateMyProfile } from "./user.controller.js";
-import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
-import { requirePermission } from "../../../core/middlewares/permission.middleware.js";
-import { checkFeatureInPlan } from "../../../core/middlewares/fetures.middleware.js";
-import { checkSubscription } from "../../../core/middlewares/subscription.middleware.js";
+import { authMiddleware } from "../../../../core/middlewares/auth.middleware.js";
+import { requirePermission } from "../../../../core/middlewares/permission.middleware.js";
+import { checkFeatureInPlan } from "../../../../core/middlewares/fetures.middleware.js";
+import { checkSubscription } from "../../../../core/middlewares/subscription.middleware.js";
 
 
 
@@ -23,6 +23,10 @@ router.put("/toggle-status/:userId", authMiddleware, requirePermission("USER_UPD
 router.put("/restore/:userId", authMiddleware, requirePermission("USER_UPDATE"), restoreUser);
 router.delete("/delete/:userId", authMiddleware, requirePermission("USER_DELETE"), deleteUser);
 router.put("/update-my-profile", authMiddleware, requirePermission("USER_UPDATE"), updateMyProfile);
+
+
+
+
 
 
 export default router;

@@ -35,6 +35,22 @@ export const assignFeatureToSubscription = async (req, res) => {
             });
         }
 
+        const existingFeaturePlan = await prisma.subscription_Plan_Feature.findUnique({
+            where: {
+                subscription_planId_featureId: {
+                    subscription_planId: planId,
+                    featureId,
+                },
+            },
+        });
+
+        if (existingFeaturePlan) {
+            return res.status(400).json({
+                success: false,
+                message: "Feature already assigned to this plan",
+            });
+        }
+
         const featurePlan = await prisma.subscription_Plan_Feature.create({
             data: {
                 subscription_planId: planId,
@@ -156,23 +172,35 @@ export const updateFeatureInSubscription = async (req, res) => {
 
 export const getAllFeaturesInASubscription = async (req, res) => {
     try {
-        if (!req.body) return res.status(400).json({ success: false, message: "Request body missing" });
         const { planId } = req.body;
+
+        if (!planId) {
+            return res.status(400).json({ success: false, message: "planId is required as a query parameter" });
+        }
+
+        // Check if plan exists first
+        const plan = await prisma.subscription_Plan.findUnique({
+            where: { id: planId },
+        });
+
+        if (!plan) {
+            return res.status(404).json({
+                success: false,
+                message: "Subscription Plan not found",
+            });
+        }
 
         const availableFeaturesInPlan = await prisma.subscription_Plan_Feature.findMany({
             where: { subscription_planId: planId },
+            include: {
+                feature: true // Optionally include feature details
+            }
         });
-
-        if (!availableFeaturesInPlan) {
-            return res.status(404).json({
-                success: false,
-                message: "Plan not found",
-            });
-        }
 
         res.json({
             success: true,
             message: "Features in plan fetched successfully",
+            count: availableFeaturesInPlan.length,
             availableFeaturesInPlan,
         });
     } catch (error) {

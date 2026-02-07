@@ -1,4 +1,4 @@
-import prisma from "../../core/config/db.js";
+import prisma from "../../../core/config/db.js";
 
 
 export const assignFeatureToTenant = async (req, res) => {
@@ -33,9 +33,9 @@ export const assignFeatureToTenant = async (req, res) => {
                 tenantId,
                 featureId,
                 feature_name: feature.feature_name,
-                tenant_name: tenant.name,
-                feature_description: feature.description,
-                tenant_description: tenant.description,
+                tenant_name: tenant.tenantName,
+                feature_description: feature.description || "",
+                tenant_description: tenant.tenantName, // Using tenantName as description for now as Tenant model has no description
             },
         });
 

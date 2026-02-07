@@ -34,7 +34,7 @@ export const listSuperAdmins = async (req, res) => {
  * Super Admin Login
  */
 export const loginSuperAdmin = async (req, res) => {
- 
+
     try {
         const { email, password } = req.body;
 
@@ -75,10 +75,17 @@ export const loginSuperAdmin = async (req, res) => {
             data: { lastLogin: new Date() }
         });
 
+        // Set Cookie
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 24 * 60 * 60 * 1000, // 1 day
+        });
+
         res.json({
             success: true,
             message: "Login successful",
-            token,
             user: {
                 id: user.id,
                 email: user.email,
@@ -99,7 +106,7 @@ export const loginSuperAdmin = async (req, res) => {
 export const createSuperAdmin = async (req, res) => {
     try {
         const { email, password, name, role } = req.body;
-        
+
 
         if (!email || !password) {
             return res.status(400).json({ success: false, message: "Email and password are required" });

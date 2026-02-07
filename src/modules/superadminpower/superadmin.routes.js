@@ -17,7 +17,7 @@ router.post("/login", loginSuperAdmin);
 router.use(authMiddleware);
 
 router.get("/", listSuperAdmins);
-router.post("/", createSuperAdmin);
+router.post("/register", createSuperAdmin);
 router.put("/:id", updateSuperAdmin);
 router.delete("/:id", deleteSuperAdmin);
 

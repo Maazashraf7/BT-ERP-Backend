@@ -1,24 +1,29 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
+import { authMiddleware } from "./core/middlewares/auth.middleware.js";
 
 // ----------------------------
 // 👑 Super Admin (Platform)
 import platformDashboardRoutes from "./platform/dashboard/dashboard.routes.js";
 import platformAuditRoutes from "./platform/audit/audit.routes.js";
 import modulesRoutes from "./platform/modules/module.routes.js";
+import tenantsfeaturesRoutes from "./modules/admin/tenants_and_features/tenantsfeatures.route.js";
 
 
 import superAdminAuthRoutes from "./modules/admin/management/management.routes.js";
 import superAdminTenantRoutes from "./modules/admin/tenants/tenant.routes.js";
-import Subscription_Plan from "./modules/admin/plans/plan.routes.js";
+import Subscription_Plan from "./modules/admin/subscription/subscription.routes.js";
 import { loginTenant } from "./modules/admin/tenants/tenant.controller.js";
+import domainRoutes from "./modules/admin/domain/domain.route.js";
+import levelPowerRoutes from "./modules/admin/levelpower/levelpower.routes.js";
 
 
 import permissionRoutes from "./modules/admin/permissions/permission.routes.js"; // Shared or specific?
 import featureRoutes from "./modules/admin/features/features.route.js";
 
 // 🏫 Tenant Admin
-import tenantRouter from "./modules/tenant.routes.js";
+import tenantRouter from "./modules/admin/tenantaction/tenant.routes.js";
 
 
 
@@ -31,10 +36,22 @@ const app = express();
 // -----------------------------
 // CORS
 // -----------------------------
-const origins = process.env.CORS_ORIGINS || "http://localhost:5174";
+const origins = process.env.CORS_ORIGINS || "*";
 app.use(
   cors({
-    origin: origins.split(","),
+    origin: (origin, callback) => {
+      // If CORS_ORIGINS is '*', allow everything
+      if (origins === "*") {
+        return callback(null, true);
+      }
+      // Otherwise, check against the allowed list
+      const allowedOrigins = origins.split(",");
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
@@ -48,6 +65,7 @@ app.use((req, res, next) => {
 // -----------------------------
 // Global Middlewares
 // -----------------------------
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -148,21 +166,46 @@ app.use(`${API_V1}/super-admin/auth`, superAdminAuthRoutes); // Login/Management
 app.use(`${API_V1}/super-admin/tenants`, superAdminTenantRoutes);
 app.use(`${API_V1}/super-admin/subscription`, Subscription_Plan);
 app.use(`${API_V1}/super-admin/features`, featureRoutes);
-
-
-
-
 app.use(`${API_V1}/super-admin/permissions`, permissionRoutes); // Permissions CRUD
+app.use(`${API_V1}/super-admin/domain`, domainRoutes);
+app.use(`${API_V1}/super-admin/tenant-features`, tenantsfeaturesRoutes);
+app.use(`${API_V1}/super-admin/level-power`, levelPowerRoutes);
+
+
+
 app.use(`${API_V1}/super-admin/dashboard`, platformDashboardRoutes);
 app.use(`${API_V1}/audit-logs`, platformAuditRoutes);
 app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
 
 
 // -----------------------------
-// 🏫 TENANT DYNAMIC ROUTES
+// 🏫 TENANT AUTH & DYNAMIC ROUTES
 // -----------------------------
-// Mounts all tenant functionality under /api/v1/:tenantName/
+
+// Global Auth Routes (Cookie-based)
+app.get(`${API_V1}/auth/me`, authMiddleware, (req, res) => {
+  res.json({
+    success: true,
+    user: req.user,
+  });
+});
+
+app.post(`${API_V1}/auth/logout`, (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+  res.json({
+    success: true,
+    message: "Logged out successfully",
+  });
+});
+
+// Global Tenant Login (Not tied to a specific tenant URL)
 app.post(`${API_V1}/auth/tenant/login`, loginTenant);
+
+// Mounts all tenant functionality under /api/v1/:tenantName/
 app.use(`${API_V1}/:tenantName`, tenantRouter);
 // -----------------------------
 // 404 Handler

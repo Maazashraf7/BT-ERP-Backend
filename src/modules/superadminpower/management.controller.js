@@ -75,10 +75,17 @@ export const loginSuperAdmin = async (req, res) => {
             data: { lastLogin: new Date() }
         });
 
+        // Set Cookie
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 24 * 60 * 60 * 1000, // 1 day
+        });
+
         res.json({
             success: true,
             message: "Login successful",
-            token,
             user: {
                 id: user.id,
                 email: user.email,

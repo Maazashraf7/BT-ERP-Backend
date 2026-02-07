@@ -161,7 +161,7 @@ export const deleteSubscription = async (req, res) => {
       });
     }
 
-    await prisma.Subscription_Plan.delete({
+    await prisma.subscription_Plan.delete({
       where: { id: subscriptionId },
     });
 

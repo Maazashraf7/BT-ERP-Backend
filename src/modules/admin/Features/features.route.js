@@ -23,4 +23,5 @@ router.put("/:featureId", requirePermission("UPDATE_FEATURE"), updateFeature);
 router.delete("/:featureId", requirePermission("DELETE_FEATURE"), deleteFeature);
 router.patch("/:featureId/status", requirePermission("UPDATE_FEATURE"), toggleFeatureStatus);
 
+
 export default router;

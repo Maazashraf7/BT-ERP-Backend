@@ -99,7 +99,7 @@ export const createTenant = async (req, res) => {
           logoUrl,
           faviconUrl,
           themeColor,
-          subscription_planId,
+          subscription_planId: subscription_planId && subscription_planId.trim() !== "" ? subscription_planId : null,
         },
       });
 
@@ -111,6 +111,16 @@ export const createTenant = async (req, res) => {
         entityId: tenant.id,
         meta: { tenantName, tenantUsername },
         req,
+      });
+
+      // 3. Create default LevelPower for Tenant Admin
+      await tx.levelPower.create({
+        data: {
+          tenantId: tenant.id,
+          tenantName: tenant.tenantName,
+          role_name: "TENANT_ADMIN",
+          power: "100",
+        },
       });
 
       return { tenant };
@@ -137,9 +147,11 @@ export const createTenant = async (req, res) => {
  */
 export const loginTenant = async (req, res) => {
   try {
+    console.log("DEBUG: loginTenant called. Body:", req.body);
     const { tenantUsername, password } = req.body;
 
     if (!tenantUsername || !password) {
+      console.log("DEBUG: Missing credentials");
       return res.status(400).json({
         success: false,
         message: "tenantUsername and password are required"
@@ -150,6 +162,8 @@ export const loginTenant = async (req, res) => {
       where: { tenantUsername }
     });
 
+    console.log("DEBUG: Tenant found:", tenant ? tenant.id : "NOT FOUND");
+
     if (!tenant) {
       return res.status(401).json({
         success: false,
@@ -158,6 +172,7 @@ export const loginTenant = async (req, res) => {
     }
 
     if (!tenant.isActive) {
+      console.log("DEBUG: Tenant is inactive");
       return res.status(403).json({
         success: false,
         message: "Tenant is disabled"
@@ -185,10 +200,17 @@ export const loginTenant = async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    // Set Cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
     res.json({
       success: true,
       message: "Tenant login successful",
-      token,
       tenant: {
         id: tenant.id,
         tenantName: tenant.tenantName,
@@ -202,7 +224,6 @@ export const loginTenant = async (req, res) => {
         faviconUrl: tenant.faviconUrl,
         themeColor: tenant.themeColor,
         subscription_planId: tenant.subscription_planId,
-
       }
     });
 
@@ -238,7 +259,7 @@ export const updateTenant = async (req, res) => {
         logoUrl: data.logoUrl,
         faviconUrl: data.faviconUrl,
         themeColor: data.themeColor,
-        subscription_planId: data.subscription_planId
+        subscription_planId: data.subscription_planId && data.subscription_planId.trim() !== "" ? data.subscription_planId : null
       }
     });
 

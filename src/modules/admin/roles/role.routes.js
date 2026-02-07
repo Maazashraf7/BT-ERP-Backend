@@ -16,7 +16,6 @@ router.use(authMiddleware);
 
 // Create Role
 router.post("/", requirePermission("ROLE_CREATE"), createRole);
-
 // View Roles
 router.get("/", requirePermission("ROLE_VIEW"), getRoles);
 router.get("/:roleId", requirePermission("ROLE_VIEW"), getRoleById);

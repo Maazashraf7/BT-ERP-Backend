@@ -3,6 +3,7 @@ model SuperAdmin {
   email            String         @unique
   password         String
   name             String?
+  power            String?        @default("1000")
   role             String         @default("SUPER_ADMIN")
   isActive         Boolean        @default(true)
   failedLoginCount Int            @default(0)

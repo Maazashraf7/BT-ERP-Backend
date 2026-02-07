@@ -24,6 +24,7 @@ model Tenant {
   loginAttempts       LoginAttempt[]
   managementStaff     ManagementStaff[]
   tenantsfeatures     tenantsfeatures[]
+  levelPowers         levelPower[]
 
   @@map("tenant")
 }

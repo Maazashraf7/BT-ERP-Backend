@@ -5,7 +5,7 @@ import prisma from "../../../core/config/db.js";
  */
 export const createFeature = async (req, res) => {
     try {
-        const { feature_name, description, isActive } = req.body;
+        const { feature_name, description, isActive,feature_code } = req.body;
 
         if (!feature_name) {
             return res.status(400).json({
@@ -19,6 +19,7 @@ export const createFeature = async (req, res) => {
                 feature_name,
                 description,
                 isActive: isActive !== undefined ? isActive : true,
+                feature_code,
             },
         });
 
@@ -32,6 +33,8 @@ export const createFeature = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+
 
 /**
  * 👑 List All Features
@@ -92,7 +95,7 @@ export const getFeatureDetails = async (req, res) => {
 export const updateFeature = async (req, res) => {
     try {
         const { featureId } = req.params;
-        const { feature_name, description, isActive } = req.body;
+        const { feature_name, description, isActive, feature_code, feature_type } = req.body;
 
         const feature = await prisma.feature.update({
             where: { id: featureId },
@@ -100,6 +103,8 @@ export const updateFeature = async (req, res) => {
                 feature_name,
                 description,
                 isActive,
+                feature_code,
+                feature_type
             },
         });
 

@@ -1,7 +1,7 @@
-import prisma from "../../../core/config/db.js";
+import prisma from "../../../../core/config/db.js";
 import bcrypt from "bcryptjs";
-import logger from "../../../core/utils/logger.js";
-import { writeAuditLog } from "../../../platform/audit/audit.helper.js";
+import logger from "../../../../core/utils/logger.js";
+import { writeAuditLog } from "../../../../platform/audit/audit.helper.js";
 /**
  * TENANT ADMIN
  * Create user
@@ -268,7 +268,7 @@ export const restoreUser = async (req, res) => {
   }
 };
 
-  
+
 export const bulkCreateUsers = async (req, res) => {
   try {
     const { users } = req.body;
@@ -442,7 +442,7 @@ export const getUserDetails = async (req, res) => {
             id: true,
             name: true,
           },
-          },
+        },
         failedLoginCount: true,
         lockedUntil: true,
         createdAt: true,
@@ -460,7 +460,7 @@ export const getUserDetails = async (req, res) => {
       success: true,
       user,
     });
-  }  catch (error) {
+  } catch (error) {
     console.error("GET USER ERROR:", error);
     res.status(500).json({
       success: false,
@@ -605,7 +605,7 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-  
 
-  
+
+
 

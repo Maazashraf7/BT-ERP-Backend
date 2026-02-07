@@ -4,6 +4,46 @@ import { writeAuditLog } from "../../../platform/audit/audit.helper.js";
 import { AUDIT_ACTIONS } from "../../../platform/audit/audit.constants.js";
 import { clearRoleCache } from "../../../core/cache/permission.cache.js";
 
+// 🏆 AUTHORITY LEVELS
+
+/**
+ * Get internal level for the requester
+ */
+const getRequesterLevel = async (user) => {
+  try {
+    if (user.type === "SUPER_ADMIN") {
+      const admin = await prisma.superAdmin.findUnique({
+        where: { id: user.id },
+        select: { power: true }
+      });
+      return admin?.power ? parseInt(admin.power) : 1000;
+    }
+
+    if (user.type === "TENANT") {
+      const lp = await prisma.levelPower.findFirst({
+        where: { tenantId: user.id, role_name: "TENANT_ADMIN" },
+        select: { power: true }
+      });
+      return lp?.power ? parseInt(lp.power) : 100;
+    }
+
+    // For regular users with assigned roles
+    if (user.id) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        include: { role: true },
+      });
+      if (dbUser && dbUser.role) {
+        return dbUser.role.level || 0;
+      }
+    }
+  } catch (error) {
+    logger.error("Error in getRequesterLevel:", error);
+  }
+
+  return 0;
+};
+
 /**
  * TENANT ADMIN
  * Create role
@@ -18,6 +58,9 @@ export const createRole = async (req, res) => {
       `[createRole] start actorUser=${actorUserId} tenant=${tenantId} name=${name}`
     );
 
+    const { level } = req.body;
+    const requestedLevel = level !== undefined ? parseInt(level) : 10;
+
     if (!name) {
       return res.status(400).json({
         success: false,
@@ -25,11 +68,50 @@ export const createRole = async (req, res) => {
       });
     }
 
-    const role = await prisma.role.create({
-      data: {
-        name,
-        tenantId,
-      },
+    // 🔒 HIERARCHY CHECK
+    const myLevel = await getRequesterLevel(req.user);
+
+    if (requestedLevel >= myLevel) {
+      return res.status(403).json({
+        success: false,
+        message: `Not authorized: You can only create roles with a level lower than your own (Your level: ${myLevel}, Requested level: ${requestedLevel}).`,
+      });
+    }
+
+    // ⚡ LevelPower Check and Sync
+    const role = await prisma.$transaction(async (tx) => {
+      // Check if this role name already exists in levelPower for this tenant
+      const existingLP = await tx.levelPower.findFirst({
+        where: { tenantId, role_name: name }
+      });
+
+      if (existingLP) {
+        const lpPower = parseInt(existingLP.power);
+        // If it exists, enforce that the new role must have the SAME power level
+        if (requestedLevel !== lpPower) {
+          throw new Error(`This role name is already registered with power ${lpPower}. Please assign exactly this power or use a different name.`);
+        }
+      } else {
+        // If it doesn't exist, Create it in levelPower table
+        const tenant = await tx.tenant.findUnique({ where: { id: tenantId }, select: { tenantName: true } });
+        await tx.levelPower.create({
+          data: {
+            tenantId,
+            tenantName: tenant?.tenantName || "Unknown",
+            role_name: name,
+            power: requestedLevel.toString(),
+          }
+        });
+      }
+
+      // Create the Role
+      return await tx.role.create({
+        data: {
+          name,
+          level: requestedLevel,
+          tenantId,
+        },
+      });
     });
 
     await writeAuditLog({
@@ -89,6 +171,7 @@ export const getRoles = async (req, res) => {
       roles: roles.map((role) => ({
         id: role.id,
         name: role.name,
+        level: role.level,
         permissions: role.permissions.map((rp) => ({
           id: rp.permission.id,
           key: rp.permission.key,
@@ -139,6 +222,7 @@ export const getRoleById = async (req, res) => {
       role: {
         id: role.id,
         name: role.name,
+        level: role.level,
         permissions: role.permissions.map((rp) => rp.permission),
       },
     });
@@ -173,9 +257,32 @@ export const updateRole = async (req, res) => {
       return res.status(404).json({ success: false, message: "Role not found" });
     }
 
+    // 🔒 HIERARCHY CHECK
+    const myLevel = await getRequesterLevel(req.user);
+    const newLevel = req.body.level !== undefined ? parseInt(req.body.level) : role.level;
+
+    // Check if user can manage THIS role
+    if (myLevel <= role.level && req.user.type !== "SUPER_ADMIN") {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized: You cannot update a role of equal or higher authority.",
+      });
+    }
+
+    // Check if user can set the NEW level
+    if (newLevel >= myLevel && req.user.type !== "SUPER_ADMIN") {
+      return res.status(403).json({
+        success: false,
+        message: `Not authorized: You cannot promote a role to your own level or higher.`,
+      });
+    }
+
     const updatedRole = await prisma.role.update({
       where: { id: roleId },
-      data: { name },
+      data: {
+        name: name || role.name,
+        level: newLevel
+      },
     });
 
     await writeAuditLog({
@@ -212,6 +319,15 @@ export const deleteRole = async (req, res) => {
 
     if (!role) {
       return res.status(404).json({ success: false, message: "Role not found" });
+    }
+
+    // 🔒 HIERARCHY CHECK
+    const myLevel = await getRequesterLevel(req.user);
+    if (myLevel <= role.level && req.user.type !== "SUPER_ADMIN") {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized: You cannot delete a role of equal or higher authority.",
+      });
     }
 
     await prisma.role.delete({
