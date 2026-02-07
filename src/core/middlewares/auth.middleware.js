@@ -13,7 +13,7 @@ export const authMiddleware = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (decoded.type === "SUPER_ADMIN") {
+    if (decoded.type === "SUPER_ADMIN" ) {
       // ✅ Handle Super Admin
       console.log("Auth Debug - Decoded:", decoded);
       const admin = await prisma.superAdmin.findUnique({

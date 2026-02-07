@@ -1,27 +1,29 @@
 model Tenant {
-  id            String   @id @default(uuid())
-  tenantName    String
-  tenantType    String
-  tenantEmail   String?
-  tenantUsername String?
-  tenantPassword String?
-  tenantPhone   String?
-  tenantAddress String?
-  tenantWebsite String?
-  logoUrl       String?
-  faviconUrl    String?
-  themeColor    String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  role String @default("SUPER_ADMIN")
+  id                  String             @id @default(uuid())
+  tenantName          String
+  tenantType          String
+  tenantEmail         String?
+  tenantUsername      String?
+  tenantPassword      String?
+  tenantPhone         String?
+  tenantAddress       String?
+  tenantWebsite       String?
+  logoUrl             String?
+  faviconUrl          String?
+  themeColor          String?
+  isActive            Boolean            @default(true)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  role                String             @default("TENANT_ADMIN")
+  type                String             @default("TENANT")
   subscription_planId String?
-  subscription_plan Subscription_Plan? @relation(fields: [subscription_planId], references: [id])
-  users         User[]
-  roles         Role[]
-  auditLogs     AuditLog[]
-  loginAttempts LoginAttempt[]
-  managementStaff ManagementStaff[]
+  subscription_plan   Subscription_Plan? @relation(fields: [subscription_planId], references: [id])
+  users               User[]
+  roles               Role[]
+  auditLogs           AuditLog[]
+  loginAttempts       LoginAttempt[]
+  managementStaff     ManagementStaff[]
+  tenantsfeatures     tenantsfeatures[]
 
   @@map("tenant")
 }

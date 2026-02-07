@@ -139,7 +139,6 @@ const API_V1 = "/api/v1";
 app.use(`${API_V1}/super-admin`, superAdminAuthRoutes); // Login/Management
 
 
-
 app.post(`${API_V1}/auth/tenant/login`, loginTenant);
 app.use(`${API_V1}/:tenantName`, tenantRouter);
 // -----------------------------

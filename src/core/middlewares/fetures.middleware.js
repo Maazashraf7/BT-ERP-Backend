@@ -4,6 +4,12 @@ export const checkFeatureInPlan = (featureName) => {
   return async (req, res, next) => {
     try {
       const { tenantId } = req.user;
+      const role = req.user.role;
+      const type = req.user.type;
+
+      if (role === "SUPER_ADMIN" && type === "SUPER_ADMIN") {
+        return next();
+      }
 
       if (!tenantId) {
         return res.status(401).json({

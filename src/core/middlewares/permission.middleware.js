@@ -11,7 +11,7 @@ export const requirePermission = (permissionKey) => {
 
       // 1️⃣ Super Admin Bypass
       // Check both token type and role name for robustness
-      if (role === "SUPER_ADMIN") {
+      if (role === "SUPER_ADMIN" || role === "TENANT_ADMIN" ) {
         return next();
       }
 

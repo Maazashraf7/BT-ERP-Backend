@@ -7,14 +7,11 @@ import { checkFeatureInPlan } from "../../../core/middlewares/fetures.middleware
 
 const router = Router();
 
-router.use(authMiddleware);
-router.use(checkSubscription);
-router.use(checkFeatureInPlan);
 
 
 // For 
-router.post("/choose-features", requirePermission("add-tenant-feature"), assignFeatureToTenant);
-router.get("/get-tenant-features/:tenantId", requirePermission("get-tenant-features"), getTeanantsAssignedFeaturesByTenantId);
-router.delete("/remove-tenant-feature", requirePermission("remove-tenant-feature"), removeFeatureFromTenant);
+router.post("/", requirePermission("ADD_TENANT_FEATURE"), assignFeatureToTenant);
+router.get("/:tenantId", requirePermission("GET_TENANT_FEATURES"), getTeanantsAssignedFeaturesByTenantId);
+router.delete("/:tenantId", requirePermission("REMOVE_TENANT_FEATURE"), removeFeatureFromTenant);
 
 export default router;

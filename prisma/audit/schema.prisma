@@ -5,8 +5,8 @@ model AuditLog {
   tenantId  String?
 
   // Separate actor FKs (FIX)
-  superAdminId String?
-  userId       String?
+  superAdminId      String?
+  userId            String?
   managementStaffId String?
 
   action   String
@@ -19,9 +19,9 @@ model AuditLog {
 
   createdAt DateTime @default(now())
 
-  tenant     Tenant?     @relation(fields: [tenantId], references: [id])
-  superAdmin SuperAdmin? @relation(fields: [superAdminId], references: [id])
-  user       User?       @relation(fields: [userId], references: [id])
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id])
+  superAdmin      SuperAdmin?      @relation(fields: [superAdminId], references: [id])
+  user            User?            @relation(fields: [userId], references: [id])
   managementStaff ManagementStaff? @relation(fields: [managementStaffId], references: [id])
 
   @@index([tenantId])
@@ -36,8 +36,8 @@ model LoginAttempt {
   actorType ActorType
   tenantId  String?
 
-  superAdminId String?
-  userId       String?
+  superAdminId      String?
+  userId            String?
   managementStaffId String?
 
   email   String
@@ -50,9 +50,9 @@ model LoginAttempt {
 
   createdAt DateTime @default(now())
 
-  tenant     Tenant?     @relation(fields: [tenantId], references: [id])
-  superAdmin SuperAdmin? @relation(fields: [superAdminId], references: [id])
-  user       User?       @relation(fields: [userId], references: [id])
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id])
+  superAdmin      SuperAdmin?      @relation(fields: [superAdminId], references: [id])
+  user            User?            @relation(fields: [userId], references: [id])
   managementStaff ManagementStaff? @relation(fields: [managementStaffId], references: [id])
 
   @@index([email])

@@ -1,10 +1,11 @@
 model Role {
-  id       String @id @default(uuid())
-  name     String
-  tenantId String
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id          String           @id @default(uuid())
+  name        String
+  tenantId    String
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   users       User[]
   permissions RolePermission[]
+
   @@unique([name, tenantId])
   @@map("role")
 }

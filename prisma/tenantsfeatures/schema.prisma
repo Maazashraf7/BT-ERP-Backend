@@ -1,16 +1,16 @@
 model tenantsfeatures {
-    id String @id @default(uuid())
-    tenantId String
-    featureId String
-    feature_name String
-    tenant_name String
-    feature_description String
-    tenant_description String   
-    tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-    feature Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
-    isActive Boolean @default(true)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id                  String   @id @default(uuid())
+  tenantId            String
+  featureId           String
+  feature_name        String
+  tenant_name         String
+  feature_description String
+  tenant_description  String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  feature             Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-    @@map("tenantsfeatures")
+  @@map("tenantsfeatures")
 }

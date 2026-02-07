@@ -1,4 +1,3 @@
-
 model Subscription_Plan {
   id        String   @id @default(uuid())
   name      String
@@ -15,14 +14,14 @@ model Subscription_Plan {
 }
 
 model Subscription_Plan_Feature {
-  id                  String   @id @default(uuid())
-  subscription_planId String
+  id                     String   @id @default(uuid())
+  subscription_planId    String
   subscription_plan_name String
-  featureId           String
-  feature_name        String
-  isActive            Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  featureId              String
+  feature_name           String
+  isActive               Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
   subscription_plan Subscription_Plan @relation(fields: [subscription_planId], references: [id], onDelete: Cascade)
   feature           Feature           @relation(fields: [featureId], references: [id], onDelete: Cascade)

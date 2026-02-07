@@ -76,13 +76,13 @@ export const createTenant = async (req, res) => {
 
     const result = await prisma.$transaction(async (tx) => {
       // 1. Verify Plan
-      const plan = await tx.subscription_Plan.findUnique({
-        where: { id: subscription_planId },
-      });
+      // const plan = await tx.subscription_Plan.findUnique({
+      //   where: { id: subscription_planId },
+      // });
 
-      if (!plan) {
-        throw new Error("Specified subscription plan not found or invalid");
-      }
+      // if (!plan) {
+      //   throw new Error("Specified subscription plan not found or invalid");
+      // }
 
 
       // 2. Create Tenant
@@ -99,7 +99,7 @@ export const createTenant = async (req, res) => {
           logoUrl,
           faviconUrl,
           themeColor,
-          subscription_planId: plan.id,
+          subscription_planId,
         },
       });
 
@@ -109,11 +109,11 @@ export const createTenant = async (req, res) => {
         action: "TENANT_CREATED",
         entity: "TENANT",
         entityId: tenant.id,
-        meta: { tenantName, tenantUsername, plan: plan.name },
+        meta: { tenantName, tenantUsername },
         req,
       });
 
-      return { tenant, planName: plan.name };
+      return { tenant };
     });
 
     res.status(201).json({
@@ -193,7 +193,7 @@ export const loginTenant = async (req, res) => {
         id: tenant.id,
         tenantName: tenant.tenantName,
         tenantUsername: tenant.tenantUsername,
-        role: tenant.role || "SUPER_ADMIN",
+        role: tenant.role || "TENANT_ADMIN",
         tenantEmail: tenant.tenantEmail,
         tenantPhone: tenant.tenantPhone,
         tenantAddress: tenant.tenantAddress,
