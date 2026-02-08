@@ -1,6 +1,7 @@
 import express from "express";
 import {
     createPlatformPermission,
+    updatePlatformPermission,
     listPlatformPermissions,
     assignPermissionsToPlatformRole,
     createPlatformPermissionDomain,
@@ -17,6 +18,7 @@ router.use(authMiddleware);
 
 // Platform Permissions
 router.post("/", requirePermission("CREATE_PLATFORM_PERMISSION"), createPlatformPermission);
+router.put("/:id", requirePermission("UPDATE_PLATFORM_PERMISSION"), updatePlatformPermission);
 router.get("/", requirePermission("VIEW_PLATFORM_PERMISSIONS"), listPlatformPermissions);
 router.post("/assign/:roleId", requirePermission("ASSIGN_PLATFORM_PERMISSIONS"), assignPermissionsToPlatformRole);
 

@@ -7,7 +7,7 @@ import logger from "../../../core/utils/logger.js";
 /**
  * Register Global Platform Management Staff (Superadmin level)
  */
-export const registerPlatformStaff = async (req, res) => {
+export const registerPlatformManagement = async (req, res) => {
     try {
         const { email, password, name, roleId, power } = req.body;
         const actorUserId = req.user.id;
@@ -27,14 +27,14 @@ export const registerPlatformStaff = async (req, res) => {
             });
         }
 
-        const existing = await prisma.platformManagement.findUnique({ where: { email } });
+        const existing = await prisma.platform_staff.findUnique({ where: { email } });
         if (existing) {
             return res.status(409).json({ success: false, message: "Email already exists" });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const staff = await prisma.platformManagement.create({
+        const staff = await prisma.platform_staff.create({
             data: {
                 email,
                 password: hashedPassword,
@@ -77,9 +77,9 @@ export const registerPlatformStaff = async (req, res) => {
 /**
  * List Global Platform Management Staff
  */
-export const listPlatformStaff = async (req, res) => {
+export const listPlatformManagement = async (req, res) => {
     try {
-        const staff = await prisma.platformManagement.findMany({
+        const staff = await prisma.platform_staff.findMany({
             include: {
                 role: {
                     select: { id: true, name: true, power: true }
@@ -101,14 +101,14 @@ export const listPlatformStaff = async (req, res) => {
 /**
  * Update Global Platform Management Staff
  */
-export const updatePlatformStaff = async (req, res) => {
+export const updatePlatformManagement = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, isActive, password, roleId, power } = req.body;
         const actorUserId = req.user.id;
         const actorType = req.user.type;
 
-        const staff = await prisma.platformManagement.findUnique({
+        const staff = await prisma.platform_staff.findUnique({
             where: { id }
         });
 
@@ -125,7 +125,7 @@ export const updatePlatformStaff = async (req, res) => {
         if (roleId !== undefined) updateData.roleId = roleId;
         if (power !== undefined) updateData.power = parseInt(power);
 
-        const updatedStaff = await prisma.platformManagement.update({
+        const updatedStaff = await prisma.platform_staff.update({
             where: { id },
             data: updateData,
             include: { role: true }
@@ -152,13 +152,13 @@ export const updatePlatformStaff = async (req, res) => {
 /**
  * Delete Global Platform Management Staff
  */
-export const deletePlatformStaff = async (req, res) => {
+export const deletePlatformManagement = async (req, res) => {
     try {
         const { id } = req.params;
         const actorUserId = req.user.id;
         const actorType = req.user.type;
 
-        const staff = await prisma.platformManagement.findUnique({
+        const staff = await prisma.platform_staff.findUnique({
             where: { id }
         });
 
@@ -166,7 +166,7 @@ export const deletePlatformStaff = async (req, res) => {
             return res.status(404).json({ success: false, message: "Platform management staff not found" });
         }
 
-        await prisma.platformManagement.delete({
+        await prisma.platform_staff.delete({
             where: { id }
         });
 
@@ -190,7 +190,7 @@ export const deletePlatformStaff = async (req, res) => {
 /**
  * Login Global Platform Management Staff
  */
-export const loginPlatformStaff = async (req, res) => {
+export const loginPlatformManagement = async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -198,7 +198,7 @@ export const loginPlatformStaff = async (req, res) => {
             return res.status(400).json({ success: false, message: "Email and password are required" });
         }
 
-        const staff = await prisma.platformManagement.findUnique({
+        const staff = await prisma.platform_staff.findUnique({
             where: { email },
             include: { role: true }
         });

@@ -20,12 +20,20 @@ async function main() {
         console.error('Error finding TenantPermissionDomain:', e.message);
     }
 
-    console.log('Checking PlatformManagement...');
+    console.log('Checking Platform_staff...');
     try {
-        const platformManagement = await prisma.platformManagement.findMany();
-        console.log('PlatformManagement found:', platformManagement.length);
+        const platformStaff = await prisma.platform_staff.findMany();
+        console.log('Platform_staff found:', platformStaff.length);
     } catch (e) {
-        console.error('Error finding PlatformManagement:', e.message);
+        console.error('Error finding Platform_staff:', e.message);
+    }
+
+    console.log('Checking PlatformRole...');
+    try {
+        const platformRole = await prisma.platformRole.findMany();
+        console.log('PlatformRole found:', platformRole.length);
+    } catch (e) {
+        console.error('Error finding PlatformRole:', e.message);
     }
 }
 

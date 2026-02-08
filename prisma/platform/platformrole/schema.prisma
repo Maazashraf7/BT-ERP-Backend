@@ -8,7 +8,7 @@ model PlatformRole {
   updatedAt        DateTime                 @updatedAt
 
   permissions      PlatformRolePermission[]
-  staffs           PlatformManagement[]
+  staffs           Platform_staff[]
 
   @@map("platform_role")
 }

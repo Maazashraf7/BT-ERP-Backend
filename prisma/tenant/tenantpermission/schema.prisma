@@ -8,8 +8,7 @@ model TenantPermission {
   name String
 
   // Metadata for UI/Grouping
-  domainId String?
-  domain   TenantPermissionDomain? @relation(fields: [domainId], references: [id])
+  domains   TenantPermissionDomain[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

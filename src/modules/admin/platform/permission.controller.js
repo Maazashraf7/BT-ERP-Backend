@@ -10,14 +10,21 @@ import { writeAuditLog } from "../../../platform/audit/audit.helper.js";
  */
 export const createPlatformPermission = async (req, res) => {
     try {
-        const { key, name, description, domainId } = req.body;
+        const { key, name, description, domainIds } = req.body;
         if (!key || !name) return res.status(400).json({ success: false, message: "Key and name required" });
 
         const existing = await prisma.platformPermission.findUnique({ where: { key } });
         if (existing) return res.status(409).json({ success: false, message: "Permission key already exists" });
 
         const permission = await prisma.platformPermission.create({
-            data: { key, name, description, domainId }
+            data: {
+                key,
+                name,
+                description,
+                domains: domainIds && Array.isArray(domainIds) ? {
+                    connect: domainIds.map(id => ({ id }))
+                } : undefined
+            }
         });
 
         res.status(201).json({ success: true, permission });
@@ -28,12 +35,45 @@ export const createPlatformPermission = async (req, res) => {
 };
 
 /**
+ * Update Platform Permission
+ */
+export const updatePlatformPermission = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { key, name, description, domainIds } = req.body;
+
+        const existing = await prisma.platformPermission.findUnique({
+            where: { id },
+            include: { domains: true }
+        });
+        if (!existing) return res.status(404).json({ success: false, message: "Platform permission not found" });
+
+        const permission = await prisma.platformPermission.update({
+            where: { id },
+            data: {
+                key,
+                name,
+                description,
+                domains: domainIds && Array.isArray(domainIds) ? {
+                    set: domainIds.map(id => ({ id }))
+                } : undefined
+            }
+        });
+
+        res.json({ success: true, message: "Permission updated successfully", permission });
+    } catch (error) {
+        logger.error("Update Platform Permission Error:", error);
+        res.status(500).json({ success: false, message: "Failed to update platform permission" });
+    }
+};
+
+/**
  * List Platform Permissions
  */
 export const listPlatformPermissions = async (req, res) => {
     try {
         const permissions = await prisma.platformPermission.findMany({
-            include: { domain: true },
+            include: { domains: true },
             orderBy: { key: "asc" }
         });
         res.json({ success: true, permissions });
@@ -128,6 +168,21 @@ export const updatePlatformPermissionDomain = async (req, res) => {
 export const deletePlatformPermissionDomain = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Check if domain has permissions
+        const count = await prisma.platformPermission.count({
+            where: {
+                domains: { some: { id } }
+            }
+        });
+
+        if (count > 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Cannot delete domain that has permissions assigned to it"
+            });
+        }
+
         await prisma.platformPermissionDomain.delete({ where: { id } });
         res.json({ success: true, message: "Domain deleted" });
     } catch (error) {

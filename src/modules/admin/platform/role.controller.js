@@ -16,7 +16,7 @@ const getPlatformRequesterLevel = async (user) => {
         }
 
         if (user.type === "PLATFORM_MANAGEMENT") {
-            const staff = await prisma.platformManagement.findUnique({
+            const staff = await prisma.platform_staff.findUnique({
                 where: { id: user.id },
                 select: { power: true }
             });

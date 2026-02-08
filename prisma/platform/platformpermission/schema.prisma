@@ -4,6 +4,7 @@ model PlatformPermission {
   key              String                   @unique
   name             String
   description      String?
+  domains          PlatformPermissionDomain[]
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
 

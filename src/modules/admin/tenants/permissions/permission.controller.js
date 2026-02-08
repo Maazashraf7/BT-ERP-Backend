@@ -11,25 +11,28 @@ import { clearRoleCache } from "../../../../core/cache/permission.cache.js";
 export const listTenantGroupedPermissions = async (req, res) => {
   try {
     const permissions = await prisma.tenantPermission.findMany({
-      include: { domain: true },
+      include: { domains: true },
       orderBy: { key: "asc" },
     });
 
     const grouped = permissions.reduce((acc, p) => {
-      const groupName = p.domain?.name || "Uncategorized";
+      const domains = p.domains.length > 0 ? p.domains : [{ name: "Uncategorized", id: null }];
 
-      if (!acc[groupName]) {
-        acc[groupName] = {
-          label: groupName,
-          domainId: p.domainId,
-          permissions: [],
-        };
-      }
+      domains.forEach((dom) => {
+        const groupName = dom.name;
+        if (!acc[groupName]) {
+          acc[groupName] = {
+            label: groupName,
+            domainId: dom.id,
+            permissions: [],
+          };
+        }
 
-      acc[groupName].permissions.push({
-        id: p.id,
-        key: p.key,
-        name: p.name,
+        acc[groupName].permissions.push({
+          id: p.id,
+          key: p.key,
+          name: p.name,
+        });
       });
 
       return acc;
@@ -40,6 +43,7 @@ export const listTenantGroupedPermissions = async (req, res) => {
       groups: Object.values(grouped),
     });
   } catch (err) {
+    logger.error("List Grouped Permissions Error:", err);
     res.status(500).json({
       success: false,
       message: "Failed to fetch permissions",
@@ -53,7 +57,7 @@ export const listTenantGroupedPermissions = async (req, res) => {
  */
 export const createTenantPermission = async (req, res) => {
   try {
-    const { key, name, domainId } = req.body;
+    const { key, name, domainIds } = req.body;
 
     if (!key || !name) {
       return res.status(400).json({ success: false, message: "Key and Name are required" });
@@ -65,7 +69,11 @@ export const createTenantPermission = async (req, res) => {
     }
 
     const permission = await prisma.tenantPermission.create({
-      data: { key, name, domainId }
+      data: {
+        key,
+        name,
+        domains: domainIds && Array.isArray(domainIds) ? { connect: domainIds.map(id => ({ id })) } : undefined
+      }
     });
 
     res.status(201).json({ success: true, permission });
@@ -82,16 +90,25 @@ export const createTenantPermission = async (req, res) => {
 export const updateTenantPermission = async (req, res) => {
   try {
     const { id } = req.params;
-    const { key, name, domainId } = req.body;
+    const { key, name, domainIds } = req.body;
 
-    const existing = await prisma.tenantPermission.findUnique({ where: { id } });
+    const existing = await prisma.tenantPermission.findUnique({
+      where: { id },
+      include: { domains: true }
+    });
     if (!existing) {
       return res.status(404).json({ success: false, message: "Permission not found" });
     }
 
     const permission = await prisma.tenantPermission.update({
       where: { id },
-      data: { key, name, domainId }
+      data: {
+        key,
+        name,
+        domains: domainIds && Array.isArray(domainIds) ? {
+          set: domainIds.map(id => ({ id }))
+        } : undefined
+      }
     });
 
     res.json({ success: true, message: "Permission updated", permission });

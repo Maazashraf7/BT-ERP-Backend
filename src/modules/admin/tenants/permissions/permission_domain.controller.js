@@ -95,7 +95,11 @@ export const deleteTenantPermissionDomain = async (req, res) => {
         const actorType = req.user.type;
 
         // Check if domain has permissions
-        const count = await prisma.tenantPermission.count({ where: { domainId: id } });
+        const count = await prisma.tenantPermission.count({
+            where: {
+                domains: { some: { id } }
+            }
+        });
         if (count > 0) {
             return res.status(400).json({
                 success: false,
