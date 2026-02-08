@@ -40,7 +40,7 @@ export const authMiddleware = async (req, res, next) => {
       };
     }
     else if (decoded.type === "STAFF") {
-      // ✅ Handle Management Staff
+      // ✅ Handle Global Management Staff
       const staff = await prisma.managementStaff.findUnique({
         where: { id: decoded.userId },
       });
@@ -51,11 +51,33 @@ export const authMiddleware = async (req, res, next) => {
 
       req.user = {
         id: staff.id,
+        email: staff.email,
+        name: staff.name,
+        role: staff.role,
+        role_name: staff.role_name,
+        power: staff.power,
+        type: "STAFF",
+      };
+    }
+    else if (decoded.type === "TENANT_STAFF") {
+      // ✅ Handle Tenant Specific Staff
+      const staff = await prisma.tenantStaff.findUnique({
+        where: { id: decoded.userId },
+      });
+
+      if (!staff || !staff.isActive) {
+        return res.status(401).json({ message: "Tenant staff inactive or not found" });
+      }
+
+      req.user = {
+        id: staff.id,
         tenantId: staff.tenantId,
         email: staff.email,
         name: staff.name,
         role: staff.role,
-        type: "STAFF",
+        role_name: staff.role_name,
+        power: staff.power,
+        type: "TENANT_STAFF",
       };
     }
     else if (decoded.type === "USER") {

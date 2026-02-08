@@ -6,7 +6,13 @@ import prisma from "../config/db.js";
  */
 export const checkSubscription = async (req, res, next) => {
   try {
-    const { tenantId } = req.user;
+    const { tenantId , role , type } = req.user;
+     
+
+
+    if (role === "SUPER_ADMIN" || type === "SUPER_ADMIN" ) {
+      return next();
+    }
 
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },

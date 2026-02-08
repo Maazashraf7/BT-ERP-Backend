@@ -118,7 +118,7 @@ export const createTenant = async (req, res) => {
         data: {
           tenantId: tenant.id,
           tenantName: tenant.tenantName,
-          role_name: "TENANT_ADMIN",
+          role: "TENANT_ADMIN",
           power: "100",
         },
       });

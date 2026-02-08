@@ -1,18 +1,15 @@
+
 model SuperAdmin {
-  id               String         @id @default(uuid())
-  email            String         @unique
-  password         String
-  name             String?
-  power            String?        @default("1000")
-  role             String         @default("SUPER_ADMIN")
-  isActive         Boolean        @default(true)
-  failedLoginCount Int            @default(0)
-  lockedUntil      DateTime?
-  lastLogin        DateTime?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  auditLogs        AuditLog[]
-  loginAttempts    LoginAttempt[]
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  power     String   @default("1000") // Highest power
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs     AuditLog[]
+  loginAttempts LoginAttempt[]
 
   @@map("super_admin")
 }

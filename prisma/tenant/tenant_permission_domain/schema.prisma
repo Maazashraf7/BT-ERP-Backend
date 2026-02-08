@@ -1,0 +1,27 @@
+model TenantPermissionDomain {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  description String?
+  tenantId    String?      
+  tenant      Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  permissions TenantPermission[]
+
+  @@map("tenant_permission_domain")
+}
+
+
+model TenantPermissionDomainAssignPermission {
+  id String @id @default(uuid())
+  domainId String
+  domain TenantPermissionDomain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  permissionId String
+  tenantPermission TenantPermission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@id([domainId, permissionId])
+  @@map("tenant_permission_domain_assign_permission")
+
+}

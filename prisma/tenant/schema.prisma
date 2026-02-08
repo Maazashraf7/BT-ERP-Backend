@@ -11,7 +11,7 @@ model Tenant {
   logoUrl             String?
   faviconUrl          String?
   themeColor          String?
-  isActive            Boolean            @default(true)
+  isActive            Boolean            @default(false)
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
   role                String             @default("TENANT_ADMIN")
@@ -19,12 +19,13 @@ model Tenant {
   subscription_planId String?
   subscription_plan   Subscription_Plan? @relation(fields: [subscription_planId], references: [id])
   users               User[]
-  roles               Role[]
+  roles               TenantRole[]
   auditLogs           AuditLog[]
   loginAttempts       LoginAttempt[]
-  managementStaff     ManagementStaff[]
   tenantsfeatures     tenantsfeatures[]
   levelPowers         levelPower[]
+  tenantStaff         TenantStaff[]
+  permissionDomains   TenantPermissionDomain[]
 
   @@map("tenant")
 }

@@ -4,10 +4,11 @@ model AuditLog {
   actorType ActorType
   tenantId  String?
 
-  // Separate actor FKs (FIX)
-  superAdminId      String?
-  userId            String?
-  managementStaffId String?
+  // Separate actor FKs
+  superAdminId         String?
+  userId               String?
+  platformManagementId String?
+  tenantStaffId        String?
 
   action   String
   entity   String
@@ -19,10 +20,11 @@ model AuditLog {
 
   createdAt DateTime @default(now())
 
-  tenant          Tenant?          @relation(fields: [tenantId], references: [id])
-  superAdmin      SuperAdmin?      @relation(fields: [superAdminId], references: [id])
-  user            User?            @relation(fields: [userId], references: [id])
-  managementStaff ManagementStaff? @relation(fields: [managementStaffId], references: [id])
+  tenant             Tenant?             @relation(fields: [tenantId], references: [id])
+  superAdmin         SuperAdmin?         @relation(fields: [superAdminId], references: [id])
+  user               User?               @relation(fields: [userId], references: [id])
+  platformManagement PlatformManagement? @relation(fields: [platformManagementId], references: [id])
+  tenantStaff        TenantStaff?        @relation(fields: [tenantStaffId], references: [id])
 
   @@index([tenantId])
   @@index([actorType])
@@ -36,9 +38,10 @@ model LoginAttempt {
   actorType ActorType
   tenantId  String?
 
-  superAdminId      String?
-  userId            String?
-  managementStaffId String?
+  superAdminId         String?
+  userId               String?
+  platformManagementId String?
+  tenantStaffId        String?
 
   email   String
   success Boolean
@@ -50,10 +53,11 @@ model LoginAttempt {
 
   createdAt DateTime @default(now())
 
-  tenant          Tenant?          @relation(fields: [tenantId], references: [id])
-  superAdmin      SuperAdmin?      @relation(fields: [superAdminId], references: [id])
-  user            User?            @relation(fields: [userId], references: [id])
-  managementStaff ManagementStaff? @relation(fields: [managementStaffId], references: [id])
+  tenant             Tenant?             @relation(fields: [tenantId], references: [id])
+  superAdmin         SuperAdmin?         @relation(fields: [superAdminId], references: [id])
+  user               User?               @relation(fields: [userId], references: [id])
+  platformManagement PlatformManagement? @relation(fields: [platformManagementId], references: [id])
+  tenantStaff        TenantStaff?        @relation(fields: [tenantStaffId], references: [id])
 
   @@index([email])
   @@index([actorType])
@@ -65,5 +69,7 @@ model LoginAttempt {
 enum ActorType {
   SUPER_ADMIN
   TENANT_USER
-  MANAGEMENT_STAFF
+  PLATFORM_MANAGEMENT
+  TENANT_STAFF
 }
+

@@ -1,0 +1,62 @@
+model Feature {
+  id           String   @id @default(uuid())
+  feature_name String   @unique
+  feature_code String   @unique
+  description  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  plans           Subscription_Plan_Feature[]
+  tenantsfeatures tenantsfeatures[]
+
+  domains      tenanFeaturedDomain_assign_features[]
+}
+
+
+
+model TenantFeatureDomain {
+  id          String   @id @default(uuid())
+  domain_name String   @unique   
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  features    tenanFeaturedDomain_assign_features[]
+}
+
+
+
+
+model tenanFeaturedDomain_assign_features {
+  id        String @id @default(uuid())
+
+  domainId    String
+  domain_name String
+  domain    TenantFeatureDomain  @relation(fields: [domainId], references: [id])
+
+  featureId String
+  feature_name String
+  feature   Feature @relation(fields: [featureId], references: [id])
+
+  @@unique([domainId, featureId])
+}
+
+
+
+
+
+model tenantsfeatures {
+  id                  String   @id @default(uuid())
+  tenantId            String
+  featureId           String
+  feature_name        String
+  tenant_name         String
+  feature_description String
+  tenant_description  String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  feature             Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("tenantsfeatures")
+}

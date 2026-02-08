@@ -205,6 +205,7 @@ export const assignSubscriptionToTenant = async (req, res) => {
       where: { id: tenantId },
       data: {
         subscription_planId: planId,
+        isActive: true,
       },
     });
 

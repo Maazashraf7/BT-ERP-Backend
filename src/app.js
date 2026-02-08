@@ -8,19 +8,20 @@ import { authMiddleware } from "./core/middlewares/auth.middleware.js";
 import platformDashboardRoutes from "./platform/dashboard/dashboard.routes.js";
 import platformAuditRoutes from "./platform/audit/audit.routes.js";
 import modulesRoutes from "./platform/modules/module.routes.js";
-import tenantsfeaturesRoutes from "./modules/admin/tenants_and_features/tenantsfeatures.route.js";
+import tenantsfeaturesRoutes from "./modules/admin/tenants/tenants_and_features/tenantsfeatures.route.js";
 
 
-import superAdminAuthRoutes from "./modules/admin/management/management.routes.js";
+import superAdminAuthRoutes from "./modules/admin/platform/superadmin.routes.js";
 import superAdminTenantRoutes from "./modules/admin/tenants/tenant.routes.js";
 import Subscription_Plan from "./modules/admin/subscription/subscription.routes.js";
 import { loginTenant } from "./modules/admin/tenants/tenant.controller.js";
-import domainRoutes from "./modules/admin/domain/domain.route.js";
+import domainRoutes from "./modules/admin/feature_domain/feature_domain.route.js";
 import levelPowerRoutes from "./modules/admin/levelpower/levelpower.routes.js";
-
-
-import permissionRoutes from "./modules/admin/permissions/permission.routes.js"; // Shared or specific?
-import featureRoutes from "./modules/admin/features/features.route.js";
+import featureRoutes from "./modules/admin/Features/features.route.js";
+import permissionRoutes from "./modules/admin/tenants/permissions/permission.routes.js";
+import platformManagementRoutes from "./modules/admin/platform/staff.routes.js";
+import platformRoleRoutes from "./modules/admin/platform/role.routes.js";
+import platformPermissionRoutes from "./modules/admin/platform/permission.routes.js";
 
 // 🏫 Tenant Admin
 import tenantRouter from "./modules/admin/tenantaction/tenant.routes.js";
@@ -178,6 +179,27 @@ app.use(`${API_V1}/audit-logs`, platformAuditRoutes);
 app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
 
 
+
+// Global Tenant Login
+app.post(`${API_V1}/auth/tenant/login`, loginTenant);
+
+// Global Platform Management Staff Management (Global)
+app.use(`${API_V1}/super-admin/platform-management`, platformManagementRoutes);
+app.use(`${API_V1}/super-admin/platform-roles`, platformRoleRoutes);
+app.use(`${API_V1}/super-admin/platform-permissions`, platformPermissionRoutes);
+
+// Mounts all tenant functionality under /api/v1/:tenantName/
+app.use(`${API_V1}/:tenantName`, tenantRouter);
+
+
+
+
+
+
+
+
+
+
 // -----------------------------
 // 🏫 TENANT AUTH & DYNAMIC ROUTES
 // -----------------------------
@@ -202,11 +224,6 @@ app.post(`${API_V1}/auth/logout`, (req, res) => {
   });
 });
 
-// Global Tenant Login (Not tied to a specific tenant URL)
-app.post(`${API_V1}/auth/tenant/login`, loginTenant);
-
-// Mounts all tenant functionality under /api/v1/:tenantName/
-app.use(`${API_V1}/:tenantName`, tenantRouter);
 // -----------------------------
 // 404 Handler
 // -----------------------------

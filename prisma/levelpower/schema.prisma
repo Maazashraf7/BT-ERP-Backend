@@ -3,8 +3,8 @@ model levelPower {
     tenantId String
     tenantName String
     tenant Tenant @relation(fields: [tenantId], references: [id])
-    role_name String
-    power String
+    role String
+    power Int
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }

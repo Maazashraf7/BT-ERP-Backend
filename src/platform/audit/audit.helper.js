@@ -4,6 +4,8 @@ export const writeAuditLog = async ({
   actorType,
   userId,
   superAdminId,
+  platformManagementId,
+  tenantStaffId,
   tenantId,
   action,
   entity,
@@ -17,16 +19,19 @@ export const writeAuditLog = async ({
         actorType,
         userId,
         superAdminId,
+        platformManagementId,
+        tenantStaffId,
         tenantId,
         action,
         entity,
         entityId,
         meta,
-        ipAddress: req.ip,
-        userAgent: req.headers["user-agent"],
+        ipAddress: req?.ip || null,
+        userAgent: req?.headers ? req.headers["user-agent"] : null,
       },
     });
   } catch (err) {
     console.error("[AUDIT_LOG_FAILED]", err.message);
   }
 };
+
