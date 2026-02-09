@@ -12,7 +12,8 @@ import adminSidebarRoutes from "../tenants/sidebar/sidebar.routes.js";
 import auditRoutes from "../../audit/audit.routes.js";
 import permissionRoutes from "../tenants/permissions/permission.routes.js";
 import tenantsfeaturesRoutes from "../tenants/tenants_and_features/tenantsfeatures.route.js";
-
+import tenantRoutes from "../tenants/tenant.routes.js";
+import featureRoutes from "../Features/features.route.js";
 // Middleware
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
 import { checkSubscription } from "../../../core/middlewares/subscription.middleware.js";
@@ -34,8 +35,12 @@ router.use(checkSubscription)
 router.use("/me", meRoutes);
 router.use("/", tenantsfeaturesRoutes);
 router.use("/roles", roleRoutes);
+router.use("/features", featureRoutes);
 router.use("/users", userRoutes);
-router.use("/permissions", permissionRoutes);
+router.use("/", tenantRoutes);
+
+
+
 
 
 

@@ -430,6 +430,7 @@ export const toggleTenantStatus = async (req, res) => {
 export const tenatPlanHistory = async (req, res) => {
   try {
     const { tenantId } = req.params;
+
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
       include: {

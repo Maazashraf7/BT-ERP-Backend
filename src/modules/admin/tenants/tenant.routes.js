@@ -13,11 +13,12 @@ import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
 
 const router = Router();
 
-// ------------------------------------
-// 👑 SUPER ADMIN — TENANT MANAGEMENT
-// ------------------------------------
+// router.use(authMiddleware); // Removed redundant middleware
 
-router.use(authMiddleware);
+router.get("/:tenantId/plan-history", (req, res, next) => {
+  console.log("Plan History Route Hit - Params:", req.params);
+  tenatPlanHistory(req, res, next);
+});
 
 router.get("/", listTenants);
 // Create tenant (onboarding)
@@ -38,6 +39,6 @@ router.delete("/:tenantId", deleteTenant);
 // Activate / Deactivate tenant
 router.patch("/:tenantId/status", toggleTenantStatus);
 
-router.get("/:tenantId/plan-history", tenatPlanHistory);
+// router.get("/:tenantId/plan-history", tenatPlanHistory); // Moved to top
 
 export default router;

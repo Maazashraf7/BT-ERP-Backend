@@ -199,6 +199,7 @@ app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
 
 
 
+
 // Global Tenant Login
 app.post(`${API_V1}/auth/tenant/login`, loginTenant);
 
@@ -208,7 +209,7 @@ app.use(`${API_V1}/super-admin/platform-roles`, platformRoleRoutes);
 app.use(`${API_V1}/super-admin/platform-permissions`, platformPermissionRoutes);
 
 // Mounts all tenant functionality under /api/v1/:tenantName/
-app.use(`${API_V1}/:tenantName`, tenantRouter);
+app.use(`${API_V1}/tenant/:tenantName`, tenantRouter);
 
 
 
