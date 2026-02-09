@@ -424,3 +424,33 @@ export const toggleTenantStatus = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to toggle status" });
   }
 };
+
+
+
+export const tenatPlanHistory = async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: {
+        plan_history: true,
+      },
+    });
+    if (!tenant) {
+      return res.status(404).json({
+        success: false,
+        message: "Tenant not found",
+      });
+    }
+    res.json({
+      success: true,
+      tenant: {
+        ...tenant,
+        plan: tenant.plan_history?.name ?? "NONE",
+      }
+    });
+  } catch (error) {
+    console.error("GET TENANT DETAILS ERROR:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch tenant details" });
+  }
+};

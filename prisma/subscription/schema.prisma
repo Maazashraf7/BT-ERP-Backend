@@ -15,6 +15,9 @@ model Subscription_Plan {
   @@map("subscription_plan")
 }
 
+// this is for linking subscription plan with domain and features
+// this is for linking subscription plan with domain and features
+
 
 model Subscription_Plan_Domain {
   id                     String   @id @default(uuid())

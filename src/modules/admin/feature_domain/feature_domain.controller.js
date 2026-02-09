@@ -6,14 +6,14 @@ import prisma from "../../../core/config/db.js";
  */
 export const createDomain = async (req, res) => {
   try {
-    const { domain_name } = req.body;
+    const { domain_name, price } = req.body;
 
     if (!domain_name) {
       return res.status(400).json({ message: "domain_name is required" });
     }
 
     const domain = await prisma.tenantFeatureDomain.create({
-      data: { domain_name }
+      data: { domain_name, price }
     });
 
     res.status(201).json(domain);

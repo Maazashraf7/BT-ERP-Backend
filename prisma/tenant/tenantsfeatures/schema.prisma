@@ -17,6 +17,7 @@ model Feature {
 model TenantFeatureDomain {
   id          String   @id @default(uuid())
   domain_name String   @unique   
+  price       Float?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   features    tenanFeaturedDomain_assign_features[]

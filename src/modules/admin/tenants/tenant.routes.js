@@ -6,6 +6,7 @@ import {
   deleteTenant,
   toggleTenantStatus,
   getTenantDetails,
+  tenatPlanHistory,
 } from "./tenant.controller.js";
 
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
@@ -36,5 +37,7 @@ router.delete("/:tenantId", deleteTenant);
 
 // Activate / Deactivate tenant
 router.patch("/:tenantId/status", toggleTenantStatus);
+
+router.get("/:tenantId/plan-history", tenatPlanHistory);
 
 export default router;
