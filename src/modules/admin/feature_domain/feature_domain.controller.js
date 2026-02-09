@@ -45,17 +45,41 @@ export const createDomain = async (req, res) => {
  */
 export const getAllDomains = async (req, res) => {
   try {
-    const domains = await prisma.tenantFeatureDomain.findMany({
+    // 1. Fetch all domains with their assigned features
+    const rawDomains = await prisma.tenantFeatureDomain.findMany({
+      include: {
+        features: {
+          include: {
+            feature: true
+          }
+        }
+      },
       orderBy: { createdAt: "desc" }
     });
-    res.json(
-      {
-        success: true,
-        domains: domains,
-        features: features
-      });
+
+    // 2. Fetch all available features to allow assignments in the UI
+    const allFeatures = await prisma.feature.findMany({
+      orderBy: { feature_name: "asc" }
+    });
+
+    // 3. Transform data to be flatter and easier for the frontend
+    const domains = rawDomains.map(domain => ({
+      ...domain,
+      assignedFeatures: domain.features.map(f => ({
+        ...f.feature,
+        assignmentId: f.id // include the join table ID if needed for removal
+      })),
+      features: undefined // remove the unneeded original relation key
+    }));
+
+    res.json({
+      success: true,
+      domains,
+      features: allFeatures
+    });
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch domains", error });
+    console.error("GET ALL DOMAINS ERROR:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch domains", error: error.message });
   }
 };
 
@@ -80,11 +104,21 @@ export const getDomainById = async (req, res) => {
     if (!domain) {
       return res.status(404).json({ message: "Domain not found" });
     }
-    res.json(
-      {
-        success: true,
-        domain: domain
-      });
+
+    // 🔍 Flatten features for the frontend
+    const flattenedDomain = {
+      ...domain,
+      assignedFeatures: domain.features.map(f => ({
+        ...f.feature,
+        assignmentId: f.id
+      })),
+      features: undefined
+    };
+
+    res.json({
+      success: true,
+      domain: flattenedDomain
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch domain", error });
   }
@@ -121,7 +155,11 @@ export const updateDomain = async (req, res) => {
       data: { domain_name }
     });
 
-    res.json(domain);
+    res.json({
+      success: true,
+      message: "Domain updated successfully",
+      domain
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to update domain", error });
   }
@@ -139,7 +177,10 @@ export const deleteDomain = async (req, res) => {
       where: { id }
     });
 
-    res.json({ message: "Domain deleted successfully" });
+    res.json({
+      success: true,
+      message: "Domain deleted successfully"
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete domain", error });
   }
@@ -214,9 +255,16 @@ export const getAssignedFeatureByDomain = async (req, res) => {
       }
     });
 
+    // 🔍 Flatten results
+    const features = featureDomain.map(fd => ({
+      ...fd.feature,
+      assignmentId: fd.id,
+      domain_name: fd.domain_name
+    }));
+
     res.json({
       success: true,
-      featureDomain,
+      features,
     });
   } catch (error) {
     console.error("GET FEATURE BY DOMAIN ERROR:", error);
