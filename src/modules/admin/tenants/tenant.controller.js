@@ -432,20 +432,16 @@ export const tenatPlanHistory = async (req, res) => {
     const { tenantId } = req.params;
 
     const tenantPlanHistory = await prisma.tenantPlanHistory.findMany({
-      where: { tenantId: tenantId },
+      where: { tenant_id: tenantId },
+      orderBy: { assigned_at: 'desc' }
     });
-    if (!tenantPlanHistory) {
-      return res.status(404).json({
-        success: false,
-        message: "Tenant not found",
-      });
-    }
+
     res.json({
       success: true,
       tenantPlanHistory: tenantPlanHistory
     });
   } catch (error) {
-    console.error("GET TENANT DETAILS ERROR:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch tenant details" });
+    console.error("GET TENANT PLAN HISTORY ERROR:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch tenant plan history" });
   }
 };
