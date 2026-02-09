@@ -180,8 +180,8 @@ const API_V1 = "/api/v1";
 app.use(`${API_V1}/super-admin/auth`, superAdminAuthRoutes); // Login/Management
 app.use(`${API_V1}/super-admin/tenants`, superAdminTenantRoutes);
 app.use(`${API_V1}/super-admin/subscription`, Subscription_Plan);
-app.use(`${API_V1}/super-admin/features`, featureRoutes);
 app.use(`${API_V1}/super-admin/features/domain`, featureDomainRoutes);
+app.use(`${API_V1}/super-admin/features`, featureRoutes);
 app.use(`${API_V1}/super-admin/permissions`, permissionRoutes); // Permissions CRUD
 app.use(`${API_V1}/super-admin/tenant-features`, tenantsfeaturesRoutes);
 app.use(`${API_V1}/super-admin/level-power`, levelPowerRoutes);
