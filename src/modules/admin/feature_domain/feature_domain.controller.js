@@ -6,14 +6,28 @@ import prisma from "../../../core/config/db.js";
  */
 export const createDomain = async (req, res) => {
   try {
-    const { domain_name, price , description } = req.body;
+    const { domain_name, price, description } = req.body;
 
     if (!domain_name) {
       return res.status(400).json({ message: "domain_name is required" });
     }
 
+    // 🔍 Case-insensitive check
+    const existingDomain = await prisma.tenantFeatureDomain.findFirst({
+      where: {
+        domain_name: {
+          equals: domain_name,
+          mode: 'insensitive'
+        }
+      }
+    });
+
+    if (existingDomain) {
+      return res.status(409).json({ message: `Domain with name '${domain_name}' already exists (case-insensitive)` });
+    }
+
     const domain = await prisma.tenantFeatureDomain.create({
-      data: { domain_name, price , description }
+      data: { domain_name, price, description }
     });
 
     res.status(201).json(domain);
@@ -78,6 +92,23 @@ export const updateDomain = async (req, res) => {
   try {
     const { id } = req.params;
     const { domain_name } = req.body;
+
+    if (domain_name) {
+      // 🔍 Case-insensitive check (excluding current self)
+      const existingDomain = await prisma.tenantFeatureDomain.findFirst({
+        where: {
+          domain_name: {
+            equals: domain_name,
+            mode: 'insensitive'
+          },
+          id: { not: id }
+        }
+      });
+
+      if (existingDomain) {
+        return res.status(409).json({ message: `Another domain with name '${domain_name}' already exists (case-insensitive)` });
+      }
+    }
 
     const domain = await prisma.tenantFeatureDomain.update({
       where: { id },
