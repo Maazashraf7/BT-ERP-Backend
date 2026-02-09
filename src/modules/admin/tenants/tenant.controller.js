@@ -114,14 +114,7 @@ export const createTenant = async (req, res) => {
       });
 
       // 3. Create default LevelPower for Tenant Admin
-      await tx.levelPower.create({
-        data: {
-          tenantId: tenant.id,
-          tenantName: tenant.tenantName,
-          role: "TENANT_ADMIN",
-          power: "100",
-        },
-      });
+
 
       return { tenant };
     });
@@ -171,13 +164,7 @@ export const loginTenant = async (req, res) => {
       });
     }
 
-    if (!tenant.isActive) {
-      console.log("DEBUG: Tenant is inactive");
-      return res.status(403).json({
-        success: false,
-        message: "Tenant is disabled"
-      });
-    }
+
 
     // 🔐 Compare password
     const isMatch = await bcrypt.compare(password, tenant.tenantPassword);

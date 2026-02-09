@@ -28,12 +28,8 @@ export const createSuperAdmin = async (req, res) => {
                 password: hashedPassword,
                 name,
                 role: role || "SUPER_ADMIN",
-                isActive: true,
             },
         });
-
-        
-
         // Audit
         // assuming writeAuditLog handles SUPER_ADMIN actor correctly
         // If writeAuditLog is not available or path is wrong, I'll fix it later. 
@@ -55,6 +51,7 @@ export const createSuperAdmin = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to create super admin" });
     }
 };
+
 /**
  * List all Super Admins
  */
@@ -66,9 +63,7 @@ export const listSuperAdmins = async (req, res) => {
                 email: true,
                 name: true,
                 role: true,
-                isActive: true,
                 createdAt: true,
-                lastLogin: true,
             },
             orderBy: { createdAt: "desc" },
         });
@@ -101,9 +96,6 @@ export const loginSuperAdmin = async (req, res) => {
             return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
 
-        if (!user.isActive) {
-            return res.status(403).json({ success: false, message: "Account is disabled" });
-        }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
@@ -122,28 +114,25 @@ export const loginSuperAdmin = async (req, res) => {
             { expiresIn: "1d" } // or your config
         );
 
-        // Update last login
-        await prisma.superAdmin.update({
-            where: { id: user.id },
-            data: { lastLogin: new Date() }
-        });
 
         // Set Cookie
         res.cookie("token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 24 * 60 * 60 * 1000, // 1 day
+            secure: false,        // HTTP allowed
+            sameSite: "lax",      // ✅ REQUIRED
+            maxAge: 24 * 60 * 60 * 1000,
+            path: "/",            // good practice
         });
 
         res.json({
             success: true,
             message: "Login successful",
+            token, // Token included for cross-IP dev capability
             user: {
                 id: user.id,
                 email: user.email,
                 name: user.name,
-                role: user.role
+                role: user.role,
             }
         });
 
@@ -159,7 +148,7 @@ export const loginSuperAdmin = async (req, res) => {
 export const updateSuperAdmin = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, role, isActive, password } = req.body;
+        const { name, role, password } = req.body;
 
         // Prevent self-deactivation if wanted, or handle gracefully
         // if (id === req.user.id && isActive === false) ...
@@ -167,7 +156,6 @@ export const updateSuperAdmin = async (req, res) => {
         const updateData = {};
         if (name !== undefined) updateData.name = name;
         if (role !== undefined) updateData.role = role;
-        if (isActive !== undefined) updateData.isActive = isActive;
         if (password) {
             updateData.password = await bcrypt.hash(password, 10);
         }
@@ -185,7 +173,6 @@ export const updateSuperAdmin = async (req, res) => {
                 email: updatedAdmin.email,
                 name: updatedAdmin.name,
                 role: updatedAdmin.role,
-                isActive: updatedAdmin.isActive
             }
         });
 

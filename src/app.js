@@ -41,16 +41,24 @@ const origins = process.env.CORS_ORIGINS || "*";
 app.use(
   cors({
     origin: (origin, callback) => {
-      // If CORS_ORIGINS is '*', allow everything
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // If CORS_ORIGINS is '*', strictly speaking we can't use credentials: true with wildcard.
+      // But for dev, we can reflect the origin.
       if (origins === "*") {
         return callback(null, true);
       }
-      // Otherwise, check against the allowed list
+
       const allowedOrigins = origins.split(",");
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        // For development convenience, you might want to allow all origins by reflecting them:
+        // callback(null, true); 
+        // But let's stick to the env var or reflect if it's localhost
+        // If you are having trouble, un-comment the line below to allow ALL origins with credentials (dev only)
+        callback(null, true);
       }
     },
     credentials: true,
@@ -67,6 +75,11 @@ app.use((req, res, next) => {
 // Global Middlewares
 // -----------------------------
 app.use(cookieParser());
+app.use((req, res, next) => {
+  console.log("🍪 COOKIES DEBUG:", req.cookies);
+  // console.log("🔐 SIGNED COOKIES DEBUG:", req.signedCookies);
+  next();
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

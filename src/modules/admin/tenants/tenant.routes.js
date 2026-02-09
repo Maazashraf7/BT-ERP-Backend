@@ -18,12 +18,12 @@ const router = Router();
 
 router.use(authMiddleware);
 
+router.get("/", listTenants);
 // Create tenant (onboarding)
 router.post("/", createTenant);
 
 
 // Get all tenants (list)
-router.get("/", listTenants);
 
 // Get tenant details
 router.get("/:tenantId", getTenantDetails);

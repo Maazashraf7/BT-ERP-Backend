@@ -4,6 +4,7 @@ import prisma from "../config/db.js";
 export const authMiddleware = async (req, res, next) => {
   // 🍪 Check cookies first, then Authorization header
   let token = req.cookies?.token;
+  console.log("Auth Debug - Token ffffffffff:", token);
 
   if (!token) {
     const authHeader = req.headers.authorization;
@@ -13,7 +14,7 @@ export const authMiddleware = async (req, res, next) => {
   }
 
   if (!token) {
-    return res.status(401).json({ message: "Authentication required" });
+    return res.status(401).json({ message: "Authentication hdcb bdckj b" });
   }
 
   try {
@@ -27,7 +28,7 @@ export const authMiddleware = async (req, res, next) => {
       });
       console.log("Auth Debug - Found Admin:", admin ? admin.id : "Not Found");
 
-      if (!admin || !admin.isActive) {
+      if (!admin) {
         return res.status(401).json({ message: "Admin inactive or not found" });
       }
 
@@ -45,7 +46,7 @@ export const authMiddleware = async (req, res, next) => {
         where: { id: decoded.userId },
       });
 
-      if (!staff || !staff.isActive) {
+      if (!staff || staff.isActive === false) {
         return res.status(401).json({ message: "Staff inactive or not found" });
       }
 
@@ -65,7 +66,7 @@ export const authMiddleware = async (req, res, next) => {
         where: { id: decoded.userId },
       });
 
-      if (!staff || !staff.isActive) {
+      if (!staff || staff.isActive === false) {
         return res.status(401).json({ message: "Tenant staff inactive or not found" });
       }
 
@@ -86,7 +87,7 @@ export const authMiddleware = async (req, res, next) => {
         where: { id: decoded.userId },
       });
 
-      if (!user || !user.isActive) {
+      if (!user || user.isActive === false) {
         return res.status(401).json({ message: "User inactive or not found" });
       }
 
@@ -106,7 +107,7 @@ export const authMiddleware = async (req, res, next) => {
         where: { id: tenantId },
       });
 
-      if (!tenant || !tenant.isActive) {
+      if (!tenant || tenant.isActive === false) {
         return res.status(401).json({ message: "Tenant inactive or not found" });
       }
 

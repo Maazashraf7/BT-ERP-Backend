@@ -16,6 +16,7 @@ model Tenant {
   updatedAt           DateTime           @updatedAt
   role                String             @default("TENANT_ADMIN")
   type                String             @default("TENANT")
+  power               Int                @default(100)
   subscription_planId String?
   subscription_plan   Subscription_Plan? @relation(fields: [subscription_planId], references: [id])
   users               User[]

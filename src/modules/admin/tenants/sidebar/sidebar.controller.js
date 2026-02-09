@@ -1,6 +1,6 @@
-import prisma from "../../core/config/db.js";
+import prisma from "../../../../core/config/db.js";
 import { buildSidebar } from "./sidebar.service.js";
-import logger from "../../core/utils/logger.js";
+import logger from "../../../../core/utils/logger.js";
 
 /**
  * Admin Sidebar API
@@ -21,8 +21,8 @@ export const getAdminSidebar = async (req, res) => {
     const rawPermissions = req.user?.permissions ?? [];
     const permissions = Array.isArray(rawPermissions)
       ? rawPermissions
-          .map((p) => (typeof p === "string" ? p : p?.key))
-          .filter(Boolean)
+        .map((p) => (typeof p === "string" ? p : p?.key))
+        .filter(Boolean)
       : [];
 
     logger.info(

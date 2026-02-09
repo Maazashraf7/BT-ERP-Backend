@@ -1,0 +1,24 @@
+[
+    {
+        "Actor Type": "Super Admin",
+        "Description": "Grants full access to creating, listing, updating, and deleting super admins.",
+        "Role": "SUPER_ADMIN",
+        "Endpoints": [
+            {
+                "Method": "POST",
+                "Path": "/api/v1/super-admin/auth/create",
+                "Permission": "N/A (Public/Initial Setup?) or specific permission"
+            },
+            {
+                "Method": "GET",
+                "Path": "/api/v1/super-admin/auth/list",
+                "Permission": "list_super_admins"
+            },
+            {
+                "Method": "POST",
+                "Path": "/api/v1/super-admin/auth/login",
+                "Permission": "Public"
+            }
+        ]
+    }
+]

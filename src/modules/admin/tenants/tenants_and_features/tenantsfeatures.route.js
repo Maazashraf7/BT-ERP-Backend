@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { assignFeatureToTenant, getTeanantsAssignedFeaturesByTenantId, removeFeatureFromTenant } from "./tenantsfeatures.controller.js";
-import { requirePermission } from "../../../core/middlewares/permission.middleware.js";
-import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
+import { requirePermission } from "../../../../core/middlewares/permission.middleware.js";
+import { authMiddleware } from "../../../../core/middlewares/auth.middleware.js";
 
 
 const router = Router();
