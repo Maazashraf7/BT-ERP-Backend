@@ -22,6 +22,7 @@ import permissionRoutes from "./modules/admin/tenants/permissions/permission.rou
 import platformManagementRoutes from "./modules/admin/platform/staff.routes.js";
 import platformRoleRoutes from "./modules/admin/platform/role.routes.js";
 import platformPermissionRoutes from "./modules/admin/platform/permission.routes.js";
+import featureDomainRoutes from "./modules/admin/feature_domain/feature_domain.route.js";
 
 // 🏫 Tenant Admin
 import tenantRouter from "./modules/admin/tenantaction/tenant.routes.js";
@@ -180,8 +181,8 @@ app.use(`${API_V1}/super-admin/auth`, superAdminAuthRoutes); // Login/Management
 app.use(`${API_V1}/super-admin/tenants`, superAdminTenantRoutes);
 app.use(`${API_V1}/super-admin/subscription`, Subscription_Plan);
 app.use(`${API_V1}/super-admin/features`, featureRoutes);
+app.use(`${API_V1}/super-admin/features/domain`, featureDomainRoutes);
 app.use(`${API_V1}/super-admin/permissions`, permissionRoutes); // Permissions CRUD
-app.use(`${API_V1}/super-admin/domain`, domainRoutes);
 app.use(`${API_V1}/super-admin/tenant-features`, tenantsfeaturesRoutes);
 app.use(`${API_V1}/super-admin/level-power`, levelPowerRoutes);
 
