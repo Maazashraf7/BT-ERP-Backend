@@ -74,7 +74,6 @@ export const getAllDomains = async (req, res) => {
     res.json({
       success: true,
       domains,
-      features: allFeatures,
       rawDomains
     });
   } catch (error) {
