@@ -48,8 +48,12 @@ export const getAllDomains = async (req, res) => {
     const domains = await prisma.tenantFeatureDomain.findMany({
       orderBy: { createdAt: "desc" }
     });
-
-    res.json(domains);
+    res.json(
+      {
+        success: true,  
+        domains: domains,
+        features: features
+      });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch domains", error });
   }
@@ -73,12 +77,14 @@ export const getDomainById = async (req, res) => {
         }
       }
     });
-
     if (!domain) {
       return res.status(404).json({ message: "Domain not found" });
     }
-
-    res.json(domain);
+    res.json(
+      {
+        success: true,  
+        domain: domain
+      });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch domain", error });
   }

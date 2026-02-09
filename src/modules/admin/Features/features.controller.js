@@ -5,12 +5,28 @@ import prisma from "../../../core/config/db.js";
  */
 export const createFeature = async (req, res) => {
     try {
-        const { feature_name, description, isActive,feature_code } = req.body;
+        const { feature_name, description, isActive, feature_code } = req.body;
 
         if (!feature_name) {
             return res.status(400).json({
                 success: false,
                 message: "Feature name (feature_name) is required",
+            });
+        }
+
+        const existingFeature = await prisma.feature.findFirst({
+            where: {
+                feature_name: {
+                    equals: feature_name,
+                    mode: 'insensitive'
+                }
+            }
+        });
+
+        if (existingFeature) {
+            return res.status(409).json({
+                success: false,
+                message: "Feature with this name already exists",
             });
         }
 
