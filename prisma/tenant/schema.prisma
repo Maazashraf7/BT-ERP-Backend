@@ -18,15 +18,17 @@ model Tenant {
   type                String             @default("TENANT")
   power               Int                @default(100)
   subscription_planId String?
-  subscription_plan   Subscription_Plan? @relation(fields: [subscription_planId], references: [id])
-  users               User[]
-  roles               TenantRole[]
-  auditLogs           AuditLog[]
-  loginAttempts       LoginAttempt[]
-  tenantsfeatures     tenantsfeatures[]
-  levelPowers         levelPower[]
-  tenantStaff         TenantStaff[]
-  permissionDomains   TenantPermissionDomain[]
+  subscription_plan   Subscription_Plan?   @relation(fields: [subscription_planId], references: [id])
+  is_plan_assigned     Boolean              @default(false)
+  plan_history         TenantPlanHistory[]
+  users                User[]
+  roles                TenantRole[]
+  auditLogs            AuditLog[]
+  loginAttempts        LoginAttempt[]
+  tenantsfeatures      tenantsfeatures[]
+  levelPowers          levelPower[]
+  tenantStaff          TenantStaff[]
+  permissionDomains    TenantPermissionDomain[]
 
   @@map("tenant")
 }

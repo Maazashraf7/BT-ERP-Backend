@@ -12,7 +12,7 @@ export const createDomain = async (req, res) => {
       return res.status(400).json({ message: "domain_name is required" });
     }
 
-    const domain = await prisma.domain.create({
+    const domain = await prisma.tenantFeatureDomain.create({
       data: { domain_name }
     });
 
@@ -31,7 +31,7 @@ export const createDomain = async (req, res) => {
  */
 export const getAllDomains = async (req, res) => {
   try {
-    const domains = await prisma.domain.findMany({
+    const domains = await prisma.tenantFeatureDomain.findMany({
       orderBy: { createdAt: "desc" }
     });
 
@@ -49,7 +49,7 @@ export const getDomainById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const domain = await prisma.domain.findUnique({
+    const domain = await prisma.tenantFeatureDomain.findUnique({
       where: { id },
       include: {
         features: {
@@ -79,7 +79,7 @@ export const updateDomain = async (req, res) => {
     const { id } = req.params;
     const { domain_name } = req.body;
 
-    const domain = await prisma.domain.update({
+    const domain = await prisma.tenantFeatureDomain.update({
       where: { id },
       data: { domain_name }
     });
@@ -98,7 +98,7 @@ export const deleteDomain = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await prisma.domain.delete({
+    await prisma.tenantFeatureDomain.delete({
       where: { id }
     });
 
@@ -113,78 +113,78 @@ export const deleteDomain = async (req, res) => {
 
 
 export const assignFeatureToDomain = async (req, res) => {
-    try {
-        const { featureId, domainId } = req.body;
+  try {
+    const { featureId, domainId } = req.body;
 
-        if (!featureId || !domainId) {
-            return res.status(400).json({
-                success: false,
-                message: "featureId and domainId are required",
-            });
-        }
-
-        const feature = await prisma.feature.findUnique({
-            where: { id: featureId },
-        });
-
-        if (!feature) {
-            return res.status(404).json({
-                success: false,
-                message: "Feature not found",
-            });
-        }
-
-        const domain = await prisma.domain.findUnique({
-            where: { id: domainId },
-        });
-
-        if (!domain) {
-            return res.status(404).json({
-                success: false,
-                message: "Domain not found",
-            });
-        }
-
-        const featureDomain = await prisma.domainFeature.create({
-            data: {
-                featureId,
-                domainId,
-                domain_name: domain.domain_name,
-                feature_name: feature.feature_name, 
-            },
-        });
-
-        res.status(201).json({
-            success: true,
-            message: "Feature assigned to domain successfully",
-            featureDomain,
-        });
-    } catch (error) {
-        console.error("ASSIGN FEATURE TO DOMAIN ERROR:", error);
-        res.status(500).json({ success: false, message: error.message });
+    if (!featureId || !domainId) {
+      return res.status(400).json({
+        success: false,
+        message: "featureId and domainId are required",
+      });
     }
+
+    const feature = await prisma.feature.findUnique({
+      where: { id: featureId },
+    });
+
+    if (!feature) {
+      return res.status(404).json({
+        success: false,
+        message: "Feature not found",
+      });
+    }
+
+    const domain = await prisma.tenantFeatureDomain.findUnique({
+      where: { id: domainId },
+    });
+
+    if (!domain) {
+      return res.status(404).json({
+        success: false,
+        message: "Domain not found",
+      });
+    }
+
+    const featureDomain = await prisma.tenanFeaturedDomain_assign_features.create({
+      data: {
+        featureId,
+        domainId,
+        domain_name: domain.domain_name,
+        feature_name: feature.feature_name,
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Feature assigned to domain successfully",
+      featureDomain,
+    });
+  } catch (error) {
+    console.error("ASSIGN FEATURE TO DOMAIN ERROR:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 
 export const getAssignedFeatureByDomain = async (req, res) => {
-    try {
-        const { domainId } = req.params;
+  try {
+    const { domainId } = req.params;
 
-        const featureDomain = await prisma.domainFeature.findMany({
-            where: { domainId },
-            include: {
-                feature: true
-            }
-        });
+    const featureDomain = await prisma.tenanFeaturedDomain_assign_features.findMany({
+      where: { domainId },
+      include: {
+        feature: true
+      }
+    });
 
-        res.json({
-            success: true,
-            featureDomain,
-        });
-    } catch (error) {
-        console.error("GET FEATURE BY DOMAIN ERROR:", error);
-        res.status(500).json({ success: false, message: error.message });
-    }
+    res.json({
+      success: true,
+      featureDomain,
+    });
+  } catch (error) {
+    console.error("GET FEATURE BY DOMAIN ERROR:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 

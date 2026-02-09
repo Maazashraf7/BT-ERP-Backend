@@ -11,7 +11,7 @@ import {
 import { requirePermission } from "../../../core/middlewares/permission.middleware.js";
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
 import { checkSuperAdmin } from "../../../core/middlewares/superadmin.middleware.js";
-import { assignFeatureToSubscription, getAllFeaturesInASubscription } from "./subscription.andfeature.controller.js";
+import { assignDomainToSubscription, removeDomainFromSubscription, getAllDomainsInSubscription } from "./subscription.and.Domain.controller.js";
 
 const router = Router();
 
@@ -23,8 +23,9 @@ router.get("/", listSubscriptions);
 router.use(authMiddleware);
 router.use(checkSuperAdmin);
 
-router.get("/all-features", requirePermission("VIEW_SUBSCRIPTION_PLAN"), getAllFeaturesInASubscription);
-router.post("/assign-feature-to-subscription",  assignFeatureToSubscription);
+router.get("/all-domains", getAllDomainsInSubscription);
+router.post("/assign-domain", assignDomainToSubscription);
+router.post("/remove-domain", removeDomainFromSubscription);
 router.post("/", requirePermission("CREATE_SUBSCRIPTION_PLAN"), createSubscription);
 router.post("/assign/:tenantId", requirePermission("ASSIGN_SUBSCRIPTION_PLAN"), assignSubscriptionToTenant);
 router.get("/:subscriptionId", requirePermission("VIEW_SUBSCRIPTION_PLAN"), getSubscriptionDetails);
@@ -33,8 +34,5 @@ router.delete("/:subscriptionId", requirePermission("DELETE_SUBSCRIPTION_PLAN"),
 
 // 🚀 Setup Default Plans
 router.post("/setup-defaults", requirePermission("SETUP_DEFAULT_PLANS"), setupDefaultSubscriptions);
-
-
-
 
 export default router;

@@ -61,7 +61,7 @@ export const listSubscriptions = async (req, res) => {
   try {
     const plans = await prisma.subscription_Plan.findMany({
       include: {
-        features: true,
+        domains: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -86,7 +86,7 @@ export const getSubscriptionDetails = async (req, res) => {
       where: { id: subscriptionId },
       include: {
         tenants: true,
-        features: true,
+        domains: true,
       },
     });
 
@@ -201,18 +201,39 @@ export const assignSubscriptionToTenant = async (req, res) => {
       });
     }
 
-    const tenant = await prisma.tenant.update({
-      where: { id: tenantId },
-      data: {
-        subscription_planId: planId,
-        isActive: true,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Update Tenant
+      const updatedTenant = await tx.tenant.update({
+        where: { id: tenantId },
+        data: {
+          subscription_planId: planId,
+          isActive: true,
+          is_plan_assigned: true,
+        },
+      });
+
+      // 2. Create History Record
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + (plan.duration || 30));
+
+      const history = await tx.tenantPlanHistory.create({
+        data: {
+          tenant_id: tenantId,
+          subscription_plan_id: planId,
+          plan_name: plan.name,
+          expires_at: expiresAt,
+          status: "ACTIVE",
+        },
+      });
+
+      return { tenant: updatedTenant, history };
     });
 
     res.json({
       success: true,
       message: "Plan assigned to tenant successfully",
-      tenant,
+      tenant: result.tenant,
+      history: result.history,
     });
   } catch (error) {
     console.error("ASSIGN PLAN ERROR:", error);

@@ -75,15 +75,16 @@ export const createTenant = async (req, res) => {
     const hashedPassword = await bcrypt.hash(tenantPassword, 10);
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Verify Plan
-      // const plan = await tx.subscription_Plan.findUnique({
-      //   where: { id: subscription_planId },
-      // });
-
-      // if (!plan) {
-      //   throw new Error("Specified subscription plan not found or invalid");
-      // }
-
+      // 1. Verify Plan (if provided)
+      let plan = null;
+      if (subscription_planId && subscription_planId.trim() !== "") {
+        plan = await tx.subscription_Plan.findUnique({
+          where: { id: subscription_planId },
+        });
+        if (!plan) {
+          throw new Error("Specified subscription plan not found");
+        }
+      }
 
       // 2. Create Tenant
       const tenant = await tx.tenant.create({
@@ -99,9 +100,26 @@ export const createTenant = async (req, res) => {
           logoUrl,
           faviconUrl,
           themeColor,
-          subscription_planId: subscription_planId && subscription_planId.trim() !== "" ? subscription_planId : null,
+          subscription_planId: plan ? plan.id : null,
+          is_plan_assigned: !!plan,
         },
       });
+
+      // 3. Create History Record if plan assigned
+      if (plan) {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + (plan.duration || 30));
+
+        await tx.tenantPlanHistory.create({
+          data: {
+            tenant_id: tenant.id,
+            subscription_plan_id: plan.id,
+            plan_name: plan.name,
+            expires_at: expiresAt,
+            status: "ACTIVE",
+          },
+        });
+      }
 
       await writeAuditLog({
         actorType: "SUPER_ADMIN",
@@ -109,7 +127,7 @@ export const createTenant = async (req, res) => {
         action: "TENANT_CREATED",
         entity: "TENANT",
         entityId: tenant.id,
-        meta: { tenantName, tenantUsername },
+        meta: { tenantName, tenantUsername, planAssigned: !!plan },
         req,
       });
 
