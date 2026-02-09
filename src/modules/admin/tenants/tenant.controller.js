@@ -431,13 +431,10 @@ export const tenatPlanHistory = async (req, res) => {
   try {
     const { tenantId } = req.params;
 
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      include: {
-        plan_history: true,
-      },
+    const tenantPlanHistory = await prisma.tenantPlanHistory.findMany({
+      where: { tenantId: tenantId },
     });
-    if (!tenant) {
+    if (!tenantPlanHistory) {
       return res.status(404).json({
         success: false,
         message: "Tenant not found",
@@ -445,10 +442,7 @@ export const tenatPlanHistory = async (req, res) => {
     }
     res.json({
       success: true,
-      tenant: {
-        ...tenant,
-        plan: tenant.plan_history?.name ?? "NONE",
-      }
+      tenantPlanHistory: tenantPlanHistory
     });
   } catch (error) {
     console.error("GET TENANT DETAILS ERROR:", error);
