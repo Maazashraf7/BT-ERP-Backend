@@ -15,6 +15,8 @@ const router = Router();
 
 // router.use(authMiddleware); // Removed redundant middleware
 
+router.use(authMiddleware);
+
 router.get("/:tenantId/plan-history", (req, res, next) => {
   console.log("Plan History Route Hit - Params:", req.params);
   tenatPlanHistory(req, res, next);
