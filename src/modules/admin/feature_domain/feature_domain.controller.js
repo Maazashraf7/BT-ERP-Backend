@@ -65,17 +65,17 @@ export const getAllDomains = async (req, res) => {
     // 3. Transform data to be flatter and easier for the frontend
     const domains = rawDomains.map(domain => ({
       ...domain,
-      assignedFeatures: domain.features.map(f => ({
+      features: domain.features.map(f => ({
         ...f.feature,
         assignmentId: f.id // include the join table ID if needed for removal
-      })),
-      features: undefined // remove the unneeded original relation key
+      }))
     }));
 
     res.json({
       success: true,
       domains,
-      features: allFeatures
+      features: allFeatures,
+      rawDomains
     });
   } catch (error) {
     console.error("GET ALL DOMAINS ERROR:", error);
@@ -108,11 +108,10 @@ export const getDomainById = async (req, res) => {
     // 🔍 Flatten features for the frontend
     const flattenedDomain = {
       ...domain,
-      assignedFeatures: domain.features.map(f => ({
+      features: domain.features.map(f => ({
         ...f.feature,
         assignmentId: f.id
-      })),
-      features: undefined
+      }))
     };
 
     res.json({
