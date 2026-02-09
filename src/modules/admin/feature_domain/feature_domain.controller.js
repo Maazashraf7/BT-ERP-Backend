@@ -50,7 +50,7 @@ export const getAllDomains = async (req, res) => {
     });
     res.json(
       {
-        success: true,  
+        success: true,
         domains: domains,
         features: features
       });
@@ -82,7 +82,7 @@ export const getDomainById = async (req, res) => {
     }
     res.json(
       {
-        success: true,  
+        success: true,
         domain: domain
       });
   } catch (error) {
