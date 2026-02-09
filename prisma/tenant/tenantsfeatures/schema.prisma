@@ -18,6 +18,7 @@ model TenantFeatureDomain {
   id          String   @id @default(uuid())
   domain_name String   @unique   
   price       Float?
+  description String? 
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
