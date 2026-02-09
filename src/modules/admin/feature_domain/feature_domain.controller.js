@@ -74,7 +74,6 @@ export const getAllDomains = async (req, res) => {
     res.json({
       success: true,
       domains,
-      rawDomains
     });
   } catch (error) {
     console.error("GET ALL DOMAINS ERROR:", error);
