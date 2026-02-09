@@ -24,6 +24,7 @@ router.use("/management-staff", staffRoutes);
 // Middleware to ensure user login for these routes
 // (We apply it here so all sub-routes are protected and have req.user)
 router.use(authMiddleware);
+router.use("/", tenantRoutes);
 
 router.use(checkSubscription)
 // router.use(checkFeatureInPlan) // ❌ Removed: Requires arguments to work. Apply to specific routes instead.
@@ -37,7 +38,6 @@ router.use("/", tenantsfeaturesRoutes);
 router.use("/roles", roleRoutes);
 router.use("/features", featureRoutes);
 router.use("/users", userRoutes);
-router.use("/", tenantRoutes);
 
 
 
