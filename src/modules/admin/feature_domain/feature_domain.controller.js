@@ -197,6 +197,18 @@ export const assignFeatureToDomain = async (req, res) => {
         message: "featureId and domainId are required",
       });
     }
+    const checkFeatureDomain = await prisma.tenanFeaturedDomain_assign_features.findFirst({
+      where: {
+        featureId,
+        domainId,
+      },
+    });
+    if (checkFeatureDomain) {
+      return res.status(409).json({
+        success: false,
+        message: "Feature already assigned to domain",
+      });
+    }
 
     const feature = await prisma.feature.findUnique({
       where: { id: featureId },
