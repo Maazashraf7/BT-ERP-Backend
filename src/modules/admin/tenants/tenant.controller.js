@@ -226,6 +226,8 @@ export const loginTenant = async (req, res) => {
         tenantAddress: tenant.tenantAddress,
         tenantWebsite: tenant.tenantWebsite,
         logoUrl: tenant.logoUrl,
+        is_plan_assigned: tenant.is_plan_assigned,
+        isActive: tenant.isActive,
         faviconUrl: tenant.faviconUrl,
         themeColor: tenant.themeColor,
         subscription_planId: tenant.subscription_planId,
