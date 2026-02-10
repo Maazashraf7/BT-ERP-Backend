@@ -402,8 +402,8 @@ export const getTenantDetails = async (req, res) => {
       include: {
         subscription_plan: true,
         roles: true,
-        subscription_payment: true,
-        domain: true,
+        plan_history: true,
+        permissionDomains: true,
       },
     });
 
