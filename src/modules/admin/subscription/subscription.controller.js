@@ -206,6 +206,8 @@ export const assignSubscriptionToTenant = async (req, res) => {
       const updatedTenant = await tx.tenant.update({
         where: { id: tenantId },
         data: {
+          subscription_plan_start_date: new Date(),
+          subscription_plan_end_date: new Date(new Date().getTime() + (plan.duration || 30) * 24 * 60 * 60 * 1000),
           subscription_planId: planId,
           isActive: true,
           is_plan_assigned: true,

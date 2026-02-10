@@ -107,7 +107,7 @@ export const authMiddleware = async (req, res, next) => {
         where: { id: tenantId },
       });
 
-      if (!tenant || tenant.isActive === false) {
+      if (!tenant) {
         return res.status(401).json({ message: "Tenant inactive or not found" });
       }
 

@@ -8,6 +8,8 @@ model Tenant {
   tenantPhone         String?
   tenantAddress       String?
   tenantWebsite       String?
+  subscription_plan_start_date DateTime?
+  subscription_plan_end_date DateTime?
   logoUrl             String?
   faviconUrl          String?
   themeColor          String?
