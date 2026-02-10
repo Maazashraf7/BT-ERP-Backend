@@ -169,11 +169,18 @@ export const loginTenant = async (req, res) => {
       });
     }
 
+    if (typeof tenantUsername !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: "tenantUsername and password must be strings"
+      });
+    }
+
     const tenant = await prisma.tenant.findFirst({
       where: { tenantUsername }
     });
 
-    console.log("DEBUG: Tenant found:", tenant ? tenant.id : "NOT FOUND");
+    console.log("DEBUG: Tenant search result:", tenant ? `Found ID: ${tenant.id}` : "NOT FOUND");
 
     if (!tenant) {
       return res.status(401).json({
@@ -182,7 +189,13 @@ export const loginTenant = async (req, res) => {
       });
     }
 
-
+    if (!tenant.tenantPassword) {
+      console.error(`ERROR: Tenant ${tenant.id} has no password set.`);
+      return res.status(500).json({
+        success: false,
+        message: "Tenant account is not properly configured (missing password)"
+      });
+    }
 
     // 🔐 Compare password
     const isMatch = await bcrypt.compare(password, tenant.tenantPassword);
@@ -194,12 +207,19 @@ export const loginTenant = async (req, res) => {
     }
 
     // JWT
+    if (!process.env.JWT_SECRET) {
+      console.error("CRITICAL ERROR: JWT_SECRET is not defined in environment variables.");
+      return res.status(500).json({
+        success: false,
+        message: "Internal server configuration error"
+      });
+    }
+
     const token = jwt.sign(
       {
         tenantId: tenant.id,
-        role: tenant.role,
+        role: tenant.role || "TENANT_ADMIN",
         type: "TENANT",
-
       },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
@@ -238,7 +258,8 @@ export const loginTenant = async (req, res) => {
     console.error("TENANT LOGIN ERROR:", error);
     res.status(500).json({
       success: false,
-      message: "Login failed"
+      message: error.message || "Login failed",
+      debug_error: error.stack
     });
   }
 };
