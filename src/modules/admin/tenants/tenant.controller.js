@@ -28,32 +28,45 @@ export const createTenant = async (req, res) => {
     const superAdminId = req.user.id;
 
 
-    const checkTenantphone = await prisma.tenant.findFirst({
-      where: {
-        tenantPhone
-      }
-    });
-    const chekTenantEmail = await prisma.tenant.findFirst({
-      where: {
-        tenantEmail
-      }
-    });
-    const chekTenantUsername = await prisma.tenant.findFirst({
-      where: {
-        tenantUsername
-      }
-    });
-    const chekTenantName = await prisma.tenant.findFirst({
-      where: {
-        tenantName
+    // 🔍 Case-insensitive and Space-insensitive Check
+    const normalizedNewName = tenantName?.replace(/\s+/g, '').toLowerCase();
+    const normalizedNewUsername = tenantUsername?.replace(/\s+/g, '').toLowerCase();
+    const normalizedNewEmail = tenantEmail?.toLowerCase();
+    const normalizedNewPhone = tenantPhone?.replace(/\s+/g, '');
+
+    const existingTenants = await prisma.tenant.findMany({
+      select: {
+        tenantName: true,
+        tenantUsername: true,
+        tenantEmail: true,
+        tenantPhone: true
       }
     });
 
+    const isDuplicate = existingTenants.find(t => {
+      const dbName = t.tenantName?.replace(/\s+/g, '').toLowerCase();
+      const dbUsername = t.tenantUsername?.replace(/\s+/g, '').toLowerCase();
+      const dbEmail = t.tenantEmail?.toLowerCase();
+      const dbPhone = t.tenantPhone?.replace(/\s+/g, '');
 
-    if (checkTenantphone || chekTenantEmail || chekTenantUsername || chekTenantName) {
+      return (
+        (dbName && dbName === normalizedNewName) ||
+        (dbUsername && dbUsername === normalizedNewUsername) ||
+        (dbEmail && dbEmail === normalizedNewEmail) ||
+        (dbPhone && dbPhone === normalizedNewPhone)
+      );
+    });
+
+    if (isDuplicate) {
+      let conflictField = "";
+      if (isDuplicate.tenantName?.replace(/\s+/g, '').toLowerCase() === normalizedNewName) conflictField = "name";
+      else if (isDuplicate.tenantUsername?.replace(/\s+/g, '').toLowerCase() === normalizedNewUsername) conflictField = "username";
+      else if (isDuplicate.tenantEmail?.toLowerCase() === normalizedNewEmail) conflictField = "email";
+      else if (isDuplicate.tenantPhone?.replace(/\s+/g, '') === normalizedNewPhone) conflictField = "phone number";
+
       return res.status(400).json({
         success: false,
-        message: "Tenant already exists with this phone number, email, username or name",
+        message: `Tenant already exists with this ${conflictField} (matches case and spaces insensitively)`,
       });
     }
 
@@ -389,6 +402,8 @@ export const getTenantDetails = async (req, res) => {
       include: {
         subscription_plan: true,
         roles: true,
+        subscription_payment: true,
+        domain: true,
       },
     });
 

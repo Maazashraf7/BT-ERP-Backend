@@ -22,15 +22,21 @@ export const createSubscription = async (req, res) => {
       });
     }
 
-    // Prevent duplicate plan names
-    const existingPlan = await prisma.subscription_Plan.findFirst({
-      where: { name },
+    // 🔍 Case-insensitive and Space-insensitive Check (Prevent duplicate plan names)
+    const normalizedNewName = name.replace(/\s+/g, '').toLowerCase();
+
+    const existingPlans = await prisma.subscription_Plan.findMany({
+      select: { name: true }
     });
 
-    if (existingPlan) {
+    const isDuplicate = existingPlans.some(p =>
+      p.name.replace(/\s+/g, '').toLowerCase() === normalizedNewName
+    );
+
+    if (isDuplicate) {
       return res.status(400).json({
         success: false,
-        message: `Plan with name '${name}' already exists`,
+        message: `Plan with name '${name}' already exists (matches case and spaces insensitively)`,
       });
     }
 

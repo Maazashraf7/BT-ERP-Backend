@@ -14,19 +14,21 @@ export const createFeature = async (req, res) => {
             });
         }
 
-        const existingFeature = await prisma.feature.findFirst({
-            where: {
-                feature_name: {
-                    equals: feature_name,
-                    mode: 'insensitive'
-                }
-            }
+        // 🔍 Case-insensitive and Space-insensitive Check
+        const normalizedNewName = feature_name.replace(/\s+/g, '').toLowerCase();
+
+        const existingFeatures = await prisma.feature.findMany({
+            select: { feature_name: true }
         });
 
-        if (existingFeature) {
+        const isDuplicate = existingFeatures.some(f =>
+            f.feature_name.replace(/\s+/g, '').toLowerCase() === normalizedNewName
+        );
+
+        if (isDuplicate) {
             return res.status(409).json({
                 success: false,
-                message: "Feature with this name already exists",
+                message: "Feature with this name already exists (matches case and spaces insensitively)",
             });
         }
 

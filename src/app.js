@@ -23,6 +23,8 @@ import platformManagementRoutes from "./modules/admin/platform/staff.routes.js";
 import platformRoleRoutes from "./modules/admin/platform/role.routes.js";
 import platformPermissionRoutes from "./modules/admin/platform/permission.routes.js";
 import featureDomainRoutes from "./modules/admin/feature_domain/feature_domain.route.js";
+import subscriptionPaymentRoutes from "./modules/admin/subscription_payment/payment.routes.js";
+
 
 // 🏫 Tenant Admin
 import tenantRouter from "./modules/admin/tenantaction/tenant.routes.js";
@@ -210,6 +212,10 @@ app.use(`${API_V1}/super-admin/platform-permissions`, platformPermissionRoutes);
 
 // Mounts all tenant functionality under /api/v1/:tenantName/
 app.use(`${API_V1}/tenant/:tenantName`, tenantRouter);
+
+// Subscription Payment Routes
+app.use(`${API_V1}/subscription-payment`, subscriptionPaymentRoutes);
+
 
 
 
