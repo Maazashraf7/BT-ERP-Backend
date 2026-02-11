@@ -7,15 +7,18 @@ export const createFeature = async (req, res) => {
     try {
         const { feature_name, description, isActive, feature_code } = req.body;
 
-        if (!feature_name) {
+        if (!feature_name || !feature_code) {
             return res.status(400).json({
                 success: false,
-                message: "Feature name (feature_name) is required",
+                message: "Feature name and code are required",
             });
         }
 
+        const upperName = feature_name.trim().toUpperCase();
+        const upperCode = feature_code.trim().toUpperCase();
+
         // 🔍 Case-insensitive and Space-insensitive Check
-        const normalizedNewName = feature_name.replace(/\s+/g, '').toLowerCase();
+        const normalizedNewName = upperName.replace(/\s+/g, '').toLowerCase();
 
         const existingFeatures = await prisma.feature.findMany({
             select: { feature_name: true }
@@ -28,16 +31,16 @@ export const createFeature = async (req, res) => {
         if (isDuplicate) {
             return res.status(409).json({
                 success: false,
-                message: "Feature with this name already exists (matches case and spaces insensitively)",
+                message: "Feature with this name already exists",
             });
         }
 
         const feature = await prisma.feature.create({
             data: {
-                feature_name,
+                feature_name: upperName,
                 description,
                 isActive: isActive !== undefined ? isActive : true,
-                feature_code,
+                feature_code: upperCode,
             },
         });
 
@@ -61,6 +64,13 @@ export const listFeatures = async (req, res) => {
     try {
         const features = await prisma.feature.findMany({
             orderBy: { createdAt: "desc" },
+            include: {
+                domains: {
+                    include: {
+                        feature_domain: true
+                    }
+                }
+            }
         });
 
         res.json({

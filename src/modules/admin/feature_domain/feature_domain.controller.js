@@ -8,12 +8,10 @@ export const createDomain = async (req, res) => {
   try {
     const { domain_name, price, description, dependencies } = req.body;
 
-    if (!domain_name) {
-      return res.status(400).json({ message: "domain_name is required" });
-    }
+    const upperDomainName = domain_name.trim().toUpperCase();
 
     // 🔍 Case-insensitive and Space-insensitive Check
-    const normalizedNewName = domain_name.replace(/\s+/g, '').toLowerCase();
+    const normalizedNewName = upperDomainName.replace(/\s+/g, '').toLowerCase();
 
     const existingDomains = await prisma.tenantFeatureDomain.findMany({
       select: { domain_name: true }
@@ -24,12 +22,12 @@ export const createDomain = async (req, res) => {
     );
 
     if (isDuplicate) {
-      return res.status(409).json({ message: `Domain with name '${domain_name}' already exists (matches case and spaces insensitively)` });
+      return res.status(409).json({ message: `Domain with name '${upperDomainName}' already exists` });
     }
 
     const domain = await prisma.tenantFeatureDomain.create({
       data: {
-        domain_name,
+        domain_name: upperDomainName,
         price,
         description,
         dependencies: dependencies && Array.isArray(dependencies) ? {

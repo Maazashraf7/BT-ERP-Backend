@@ -32,4 +32,6 @@ router.get("/assignedfeatures/:domainId", requirePermission("GET_FEATURE_BY_DOMA
 router.post("/dependency", requirePermission("UPDATE_DOMAIN"), addDomainDependency);
 router.delete("/dependency", requirePermission("UPDATE_DOMAIN"), removeDomainDependency);
 
+
+
 export default router;

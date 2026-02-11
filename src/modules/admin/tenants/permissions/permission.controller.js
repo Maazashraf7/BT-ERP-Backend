@@ -63,15 +63,18 @@ export const createTenantPermission = async (req, res) => {
       return res.status(400).json({ success: false, message: "Key and Name are required" });
     }
 
-    const existing = await prisma.tenantPermission.findUnique({ where: { key } });
+    const upperKey = key.trim().toUpperCase();
+    const upperName = name.trim().toUpperCase();
+
+    const existing = await prisma.tenantPermission.findUnique({ where: { key: upperKey } });
     if (existing) {
       return res.status(409).json({ success: false, message: "Permission key already exists" });
     }
 
     const permission = await prisma.tenantPermission.create({
       data: {
-        key,
-        name,
+        key: upperKey,
+        name: upperName,
         domains: domainIds && Array.isArray(domainIds) ? { connect: domainIds.map(id => ({ id })) } : undefined
       }
     });

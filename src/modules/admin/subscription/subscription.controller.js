@@ -22,8 +22,10 @@ export const createSubscription = async (req, res) => {
       });
     }
 
+    const upperName = name.trim().toUpperCase();
+
     // 🔍 Case-insensitive and Space-insensitive Check (Prevent duplicate plan names)
-    const normalizedNewName = name.replace(/\s+/g, '').toLowerCase();
+    const normalizedNewName = upperName.replace(/\s+/g, '').toLowerCase();
 
     const existingPlans = await prisma.subscription_Plan.findMany({
       select: { name: true }
@@ -36,13 +38,13 @@ export const createSubscription = async (req, res) => {
     if (isDuplicate) {
       return res.status(400).json({
         success: false,
-        message: `Plan with name '${name}' already exists (matches case and spaces insensitively)`,
+        message: `Plan with name '${upperName}' already exists`,
       });
     }
 
     const plan = await prisma.subscription_Plan.create({
       data: {
-        name,
+        name: upperName,
         price: parseFloat(price),
         duration: parseInt(duration),
         isActive: isActive !== undefined ? isActive : true,
