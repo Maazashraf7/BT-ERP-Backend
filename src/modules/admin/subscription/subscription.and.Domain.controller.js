@@ -76,17 +76,35 @@ export const assignDomainToSubscription = async (req, res) => {
         const dependencies = await getRecursiveDependencies(domainId);
 
         if (dependencies.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    "This domain has dependencies. Please assign the required domains first before adding this domain.",
-                requiredDomains: dependencies.map(d => ({
-                    id: d.id,
-                    name: d.domain_name
-                }))
+            // Check which dependencies are NOT yet assigned to this plan
+            const assignedDomains = await prisma.subscription_Plan_Domain.findMany({
+                where: {
+                    subscription_planId: planId,
+                    domainId: { in: dependencies.map(d => d.id) }
+                },
+                select: { domainId: true }
             });
+
+            const assignedIds = new Set(assignedDomains.map(a => a.domainId));
+            const missingDependencies = dependencies.filter(d => !assignedIds.has(d.id));
+
+            if (missingDependencies.length > 0) {
+                // Unique missing dependencies by ID
+                const uniqueMissing = Array.from(
+                    new Map(missingDependencies.map(d => [d.id, d])).values()
+                );
+
+                return res.status(400).json({
+                    success: false,
+                    message: "This domain has dependencies. Please assign the required domains first before adding this domain.",
+                    requiredDomains: uniqueMissing.map(d => ({
+                        id: d.id,
+                        name: d.domain_name
+                    }))
+                });
+            }
         }
-        
+
         // 5️⃣ Check if already assigned
         const existingAssignment =
             await prisma.subscription_Plan_Domain.findFirst({
