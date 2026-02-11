@@ -13,6 +13,8 @@ import auditRoutes from "../../audit/audit.routes.js";
 import permissionRoutes from "../tenants/permissions/permission.routes.js";
 import tenantRoutes from "../tenants/tenant.routes.js";
 import featureRoutes from "../Features/features.route.js";
+import studentRoutes from "../featuresa_available/student/student.route.js";
+
 // Middleware
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
 import { checkSubscription } from "../../../core/middlewares/subscription.middleware.js";
@@ -32,6 +34,7 @@ router.use("/me", meRoutes);
 router.use("/roles", roleRoutes);
 router.use("/features", featureRoutes);
 router.use("/users", userRoutes);
+router.use("/students", studentRoutes);
 
 
 

@@ -2,7 +2,29 @@ import prisma from "../../../core/config/db.js";
 
 
 /**
+ * Helper: Get all dependencies recursively
+ */
+const getRecursiveDependencies = async (domainId, visited = new Set()) => {
+    if (visited.has(domainId)) return [];
+    visited.add(domainId);
+
+    const dependencies = await prisma.domainDependency.findMany({
+        where: { domainId },
+        include: { requires: true }
+    });
+
+    let allDeps = [];
+    for (const dep of dependencies) {
+        allDeps.push(dep.requires);
+        const childDeps = await getRecursiveDependencies(dep.requiresId, visited);
+        allDeps = [...allDeps, ...childDeps];
+    }
+    return allDeps;
+};
+
+/**
  * Assign Domain (TenantFeatureDomain) to Subscription Plan
+ * Automatically assigns dependencies if they don't exist in the plan.
  */
 export const assignDomainToSubscription = async (req, res) => {
     try {
@@ -23,7 +45,7 @@ export const assignDomainToSubscription = async (req, res) => {
         if (!domain) {
             return res.status(404).json({
                 success: false,
-                message: `Domain not found with ID: ${domainId}`,
+                message: `Domain not found`,
             });
         }
 
@@ -34,40 +56,50 @@ export const assignDomainToSubscription = async (req, res) => {
         if (!plan) {
             return res.status(404).json({
                 success: false,
-                message: `Plan not found with ID: ${planId}`,
+                message: `Plan not found`,
             });
         }
 
-        // Check relation
-        const existingData = await prisma.subscription_Plan_Domain.findUnique({
+        // 1. Get all dependencies (recursive)
+        const allRequiredDomainsResource = await getRecursiveDependencies(domainId);
+        // Add the main domain to the list
+        const domainsToAssign = [domain, ...allRequiredDomainsResource];
+
+        // 2. Filter out already assigned domains to avoid unique constraint errors
+        const existingAssignments = await prisma.subscription_Plan_Domain.findMany({
             where: {
-                subscription_planId_domainId: {
-                    subscription_planId: planId,
-                    domainId,
-                },
+                subscription_planId: planId,
+                domainId: { in: domainsToAssign.map(d => d.id) }
             },
+            select: { domainId: true }
         });
 
-        if (existingData) {
+        const existingIds = new Set(existingAssignments.map(a => a.domainId));
+        const newDomainsToAssign = domainsToAssign.filter(d => !existingIds.has(d.id));
+
+        if (newDomainsToAssign.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: "Domain already assigned to this plan",
+                message: "Domain and all its dependencies are already assigned to this plan",
             });
         }
 
-        const planDomain = await prisma.subscription_Plan_Domain.create({
-            data: {
-                subscription_planId: planId,
-                subscription_plan_name: plan.name,
-                domainId,
-                domain_name: domain.domain_name,
-            },
-        });
+        // 3. Create all assignments in a transaction
+        const assignments = await prisma.$transaction(
+            newDomainsToAssign.map(d => prisma.subscription_Plan_Domain.create({
+                data: {
+                    subscription_planId: planId,
+                    subscription_plan_name: plan.name,
+                    domainId: d.id,
+                    domain_name: d.domain_name,
+                }
+            }))
+        );
 
         res.json({
             success: true,
-            message: "Domain assigned to plan successfully",
-            planDomain,
+            message: `Successfully assigned ${assignments.length} domain(s) to plan (including dependencies)`,
+            assignedDetails: assignments.map(a => a.domain_name),
         });
     } catch (error) {
         console.error("ASSIGN DOMAIN TO PLAN ERROR:", error);

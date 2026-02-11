@@ -6,7 +6,7 @@ import prisma from "../../../core/config/db.js";
  */
 export const createDomain = async (req, res) => {
   try {
-    const { domain_name, price, description } = req.body;
+    const { domain_name, price, description, dependencies } = req.body;
 
     if (!domain_name) {
       return res.status(400).json({ message: "domain_name is required" });
@@ -28,7 +28,16 @@ export const createDomain = async (req, res) => {
     }
 
     const domain = await prisma.tenantFeatureDomain.create({
-      data: { domain_name, price, description }
+      data: {
+        domain_name,
+        price,
+        description,
+        dependencies: dependencies && Array.isArray(dependencies) ? {
+          create: dependencies.map(depId => ({
+            requiresId: depId
+          }))
+        } : undefined
+      }
     });
 
     res.status(201).json(domain);
@@ -36,7 +45,51 @@ export const createDomain = async (req, res) => {
     if (error.code === "P2002") {
       return res.status(409).json({ message: "Domain already exists" });
     }
-    res.status(500).json({ message: "Failed to create domain", error });
+    res.status(500).json({ message: "Failed to create domain", error: error.message });
+  }
+};
+
+/**
+ * ADD DOMAIN DEPENDENCY
+ */
+export const addDomainDependency = async (req, res) => {
+  try {
+    const { domainId, requiresId } = req.body;
+
+    if (!domainId || !requiresId) {
+      return res.status(400).json({ message: "domainId and requiresId are required" });
+    }
+
+    const dependency = await prisma.domainDependency.create({
+      data: { domainId, requiresId }
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Dependency added successfully",
+      dependency
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to add dependency", error: error.message });
+  }
+};
+
+/**
+ * REMOVE DOMAIN DEPENDENCY
+ */
+export const removeDomainDependency = async (req, res) => {
+  try {
+    const { domainId, requiresId } = req.body;
+
+    await prisma.domainDependency.delete({
+      where: {
+        domainId_requiresId: { domainId, requiresId }
+      }
+    });
+
+    res.json({ success: true, message: "Dependency removed successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to remove dependency", error: error.message });
   }
 };
 

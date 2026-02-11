@@ -29,6 +29,7 @@ model Tenant {
   loginAttempts        LoginAttempt[]
   levelPowers          levelPower[]
   tenantStaff          TenantStaff[]
+  students             Student[]
   permissionDomains    TenantPermissionDomain[]
 
   @@map("tenant")

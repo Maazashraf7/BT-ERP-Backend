@@ -1,12 +1,14 @@
 import prisma from "../config/db.js";
 
-export const checkDomainInPlan = (featureName) => {
+/**
+ * Middleware to check if a specific domain is included in the tenant's subscription plan.
+ */
+export const checkDomainInPlan = (domainName) => {
   return async (req, res, next) => {
     try {
-      const { tenantId } = req.user;
-      const role = req.user.role;
-      const type = req.user.type;
+      const { tenantId, role, type } = req.user;
 
+      // Super admins bypass this check
       if (role === "SUPER_ADMIN" && type === "SUPER_ADMIN") {
         return next();
       }
@@ -20,52 +22,41 @@ export const checkDomainInPlan = (featureName) => {
 
       const tenant = await prisma.tenant.findUnique({
         where: { id: tenantId },
-        include: {
-          subscription_plan: true, // relation, not ID
+        select: {
+          isActive: true,
+          subscription_planId: true,
         },
       });
 
-      if (!tenant || !tenant.isActive || !tenant.subscription_plan) {
+      if (!tenant || !tenant.isActive || !tenant.subscription_planId) {
         return res.status(403).json({
           success: false,
           message: "Active subscription plan required",
         });
       }
 
-      const feature = await prisma.feature.findUnique({
-        where: { feature_name: featureName },
+      // Check if the domain is assigned to the plan
+      // We check by domain_name to match the argument
+      const domainAssignment = await prisma.subscription_Plan_Domain.findFirst({
+        where: {
+          subscription_planId: tenant.subscription_planId,
+          domain_name: domainName,
+        },
       });
 
-      if (!feature) {
+      if (!domainAssignment) {
         return res.status(403).json({
           success: false,
-          message: `Feature "${featureName}" not configured`,
-        });
-      }
-
-      const featureInPlan =
-        await prisma.Subscription_PlanFeature.findUnique({
-          where: {
-            subscription_planId_featureId: {
-              subscription_planId: tenant.subscription_plan.id,
-              featureId: feature.id,
-            },
-          },
-        });
-
-      if (!featureInPlan) {
-        return res.status(403).json({
-          success: false,
-          message: `${featureName} not available in your subscription plan`,
+          message: `The "${domainName}" domain is not included in your current subscription plan.`,
         });
       }
 
       next();
     } catch (error) {
-      console.error("Feature guard error:", error);
+      console.error("Domain access validation error:", error);
       res.status(500).json({
         success: false,
-        message: "Feature access validation failed",
+        message: "Failed to validate domain access",
       });
     }
   };

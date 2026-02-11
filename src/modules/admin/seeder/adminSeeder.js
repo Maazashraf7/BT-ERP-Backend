@@ -11,11 +11,6 @@ const seedAdminData = async () => {
         // 1. Create Default Features
         const features = [
             { name: "Student Management", code: "STUDENT_MGMT", desc: "Manage student profiles and enrollment" },
-            { name: "Teacher Management", code: "TEACHER_MGMT", desc: "Manage teacher profiles and assignments" },
-            { name: "Fee Management", code: "FEE_MGMT", desc: "Manage student fees and payments" },
-            { name: "Attendance System", code: "ATTENDANCE_SYS", desc: "Track student and teacher attendance" },
-            { name: "Examination Portal", code: "EXAM_PORTAL", desc: "Manage exams and results" },
-            { name: "Library Management", code: "LIBRARY_MGMT", desc: "Manage books and issuing" },
         ];
 
         console.log("🔹 Seeding Features...");
@@ -37,9 +32,7 @@ const seedAdminData = async () => {
 
         // 2. Create Feature Domains
         const domains = [
-            { name: "Academic", price: 500, desc: "Academic related features" },
-            { name: "Finance", price: 1000, desc: "Financial management features" },
-            { name: "Operations", price: 750, desc: "Daily operation features" },
+         
         ];
 
         console.log("🔹 Seeding Feature Domains...");
