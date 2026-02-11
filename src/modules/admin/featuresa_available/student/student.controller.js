@@ -61,7 +61,7 @@ export const getStudentDetails = async (req, res) => {
         const { id } = req.params;
         const { tenantId } = req.user;
 
-        const student = await prisma.student.findUnique({
+        const student = await prisma.student.findFirst({
             where: { id, tenantId }
         });
 
@@ -85,19 +85,32 @@ export const updateStudent = async (req, res) => {
         const { tenantId } = req.user;
         const data = req.body;
 
+        // Security: Ensure student belongs to tenant
+        const existingStudent = await prisma.student.findFirst({
+            where: { id, tenantId }
+        });
+
+        if (!existingStudent) {
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
+
+        // Prevent modification of sensitive fields
+        delete data.id;
+        delete data.tenantId;
+
         if (data.dateOfBirth) {
             data.dateOfBirth = new Date(data.dateOfBirth);
         }
 
         const student = await prisma.student.update({
-            where: { id, tenantId },
+            where: { id },
             data
         });
 
         res.json({ success: true, message: "Student updated successfully", student });
     } catch (error) {
         console.error("UPDATE STUDENT ERROR:", error);
-        res.status(500).json({ success: false, message: "Failed to update student" });
+        res.status(500).json({ success: false, message: error.message || "Failed to update student" });
     }
 };
 
@@ -109,9 +122,14 @@ export const deleteStudent = async (req, res) => {
         const { id } = req.params;
         const { tenantId } = req.user;
 
-        await prisma.student.delete({
+        // deleteMany allows using non-unique fields in where
+        const result = await prisma.student.deleteMany({
             where: { id, tenantId }
         });
+
+        if (result.count === 0) {
+            return res.status(404).json({ success: false, message: "Student not found or already deleted" });
+        }
 
         res.json({ success: true, message: "Student deleted successfully" });
     } catch (error) {

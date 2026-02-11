@@ -217,14 +217,21 @@ export const getDomainById = async (req, res) => {
 export const updateDomain = async (req, res) => {
   try {
     const { id } = req.params;
-    const { domain_name } = req.body;
+    const { domain_name, price, description, dependencies, isActive } = req.body;
 
+    // 1. Check if domain exists
+    const domainExists = await prisma.tenantFeatureDomain.findUnique({ where: { id } });
+    if (!domainExists) {
+      return res.status(404).json({ message: "Domain not found" });
+    }
+
+    // 2. Uniqueness Check for Domain Name
     if (domain_name) {
-      // 🔍 Case-insensitive check (excluding current self)
+      const upperName = domain_name.trim().toUpperCase();
       const existingDomain = await prisma.tenantFeatureDomain.findFirst({
         where: {
           domain_name: {
-            equals: domain_name,
+            equals: upperName,
             mode: 'insensitive'
           },
           id: { not: id }
@@ -232,19 +239,32 @@ export const updateDomain = async (req, res) => {
       });
 
       if (existingDomain) {
-        return res.status(409).json({ message: `Another domain with name '${domain_name}' already exists (case-insensitive)` });
+        return res.status(409).json({ message: `Another domain with name '${upperName}' already exists` });
       }
     }
 
+    // 3. Update the Domain
     const domain = await prisma.tenantFeatureDomain.update({
       where: { id },
-      data: { domain_name },
+      data: {
+        domain_name: domain_name ? domain_name.trim().toUpperCase() : undefined,
+        price: price !== undefined ? parseFloat(price) : undefined,
+        description,
+        isActive: isActive !== undefined ? Boolean(isActive) : undefined,
+        dependencies: (dependencies && Array.isArray(dependencies)) ? {
+          deleteMany: {}, // Clear existing dependencies
+          create: dependencies.map(depId => ({
+            requiresId: depId
+          }))
+        } : undefined
+      },
       include: {
         features: { include: { feature: true } },
         dependencies: { include: { requires: true } }
       }
     });
 
+    // 4. Flatten the response for the frontend
     const flattenedDomain = {
       ...domain,
       features: domain.features.map(f => ({ ...f.feature, assignmentId: f.id })),
@@ -257,7 +277,8 @@ export const updateDomain = async (req, res) => {
       domain: flattenedDomain
     });
   } catch (error) {
-    res.status(500).json({ message: "Failed to update domain", error });
+    console.error("UPDATE DOMAIN ERROR:", error);
+    res.status(500).json({ message: "Failed to update domain", error: error.message });
   }
 };
 

@@ -10,10 +10,11 @@ import tenantBrandingRoutes from "../branding/branding.routes.js";
 import adminDashboardRoutes from "../dashboard/dashboard.routes.js";
 import adminSidebarRoutes from "../tenants/sidebar/sidebar.routes.js";
 import auditRoutes from "../../audit/audit.routes.js";
-import permissionRoutes from "../tenants/permissions/permission.routes.js";
 import tenantRoutes from "../tenants/tenant.routes.js";
-import featureRoutes from "../Features/features.route.js";
+import featureRoutes from "../features/features.route.js";
 import studentRoutes from "../featuresa_available/student/student.route.js";
+import teacherRoutes from "../featuresa_available/teachers/teachers.route.js";
+import examinationRoutes from "../featuresa_available/examination_portal/examination.route.js";
 
 // Middleware
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
@@ -35,6 +36,8 @@ router.use("/roles", roleRoutes);
 router.use("/features", featureRoutes);
 router.use("/users", userRoutes);
 router.use("/students", studentRoutes);
+router.use("/teachers", teacherRoutes);
+router.use("/examination-portal", examinationRoutes);
 
 
 

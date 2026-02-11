@@ -11,6 +11,8 @@ const seedAdminData = async () => {
         // 1. Create Default Features
         const features = [
             { name: "Student Management", code: "STUDENT_MGMT", desc: "Manage student profiles and enrollment" },
+            { name: "Teacher Management", code: "TEACHER_MGMT", desc: "Manage teacher profiles and education" },
+            { name: "Examination Portal", code: "EXAM_PORTAL", desc: "Manage exams and datesheets" },
         ];
 
         console.log("🔹 Seeding Features...");
@@ -32,7 +34,7 @@ const seedAdminData = async () => {
 
         // 2. Create Feature Domains
         const domains = [
-         
+
         ];
 
         console.log("🔹 Seeding Feature Domains...");

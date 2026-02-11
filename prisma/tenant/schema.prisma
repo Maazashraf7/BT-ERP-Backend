@@ -30,6 +30,9 @@ model Tenant {
   levelPowers          levelPower[]
   tenantStaff          TenantStaff[]
   students             Student[]
+  teachers             Teacher[]
+  examinations         Examination[]
+  examSchedules         ExamSchedule[]
   permissionDomains    TenantPermissionDomain[]
 
   @@map("tenant")
