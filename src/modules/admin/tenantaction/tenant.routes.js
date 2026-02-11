@@ -26,24 +26,12 @@ router.use(authMiddleware);
 router.use("/", tenantRoutes);
 
 router.use(checkSubscription)
-// router.use(checkFeatureInPlan) // ❌ Removed: Requires arguments to work. Apply to specific routes instead.
-// -----------------------------
-// 🏫 TENANT ROUTES
-// -----------------------------
-// Prefix: /api/v1/:tenantName/...
+
 
 router.use("/me", meRoutes);
 router.use("/roles", roleRoutes);
 router.use("/features", featureRoutes);
 router.use("/users", userRoutes);
-
-
-
-
-
-
-
-
 
 
 

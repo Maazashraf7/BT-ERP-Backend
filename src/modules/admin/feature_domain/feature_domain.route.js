@@ -10,11 +10,12 @@ import {
 } from "./feature_domain.controller.js";
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
 import { requirePermission } from "../../../core/middlewares/permission.middleware.js";
-
+import { checkSubscription } from "../../../core/middlewares/subscription.middleware.js";
 const router = express.Router();
 
 
 router.use(authMiddleware);
+router.use(checkSubscription)
 
 
 router.post("/", requirePermission("CREATE_DOMAIN"), createDomain);

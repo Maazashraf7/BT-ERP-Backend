@@ -1,6 +1,6 @@
 import prisma from "../config/db.js";
 
-export const checkFeatureInPlan = (featureName) => {
+export const checkDomainInPlan = (featureName) => {
   return async (req, res, next) => {
     try {
       const { tenantId } = req.user;

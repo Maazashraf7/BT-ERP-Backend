@@ -33,16 +33,41 @@ const getPlatformRequesterLevel = async (user) => {
  */
 export const createPlatformRole = async (req, res) => {
     try {
-        const { name, power, description } = req.body;
+        let { name, power, description } = req.body;
         const actorUserId = req.user.id;
         const actorType = req.user.type;
 
         if (!name) {
-            return res.status(400).json({ success: false, message: "Role name required" });
+            return res.status(400).json({
+                success: false,
+                message: "Role name required"
+            });
+        }
+
+        // ✅ 1️⃣ Convert to CAPITAL & trim
+        name = name.trim().toUpperCase();
+
+        // ✅ 2️⃣ Check duplicate (case-insensitive)
+        const existingRole = await prisma.platformRole.findFirst({
+            where: {
+                name: {
+                    equals: name,
+                    mode: "insensitive", // important
+                },
+            },
+        });
+
+        if (existingRole) {
+            return res.status(400).json({
+                success: false,
+                message: "Role already exists",
+            });
         }
 
         const requestedPower = power !== undefined ? parseInt(power) : 10;
         const myLevel = await getPlatformRequesterLevel(req.user);
+
+       
 
         if (actorType !== "SUPER_ADMIN" && requestedPower >= myLevel) {
             return res.status(403).json({
@@ -51,6 +76,7 @@ export const createPlatformRole = async (req, res) => {
             });
         }
 
+        // ✅ 3️⃣ Create role
         const role = await prisma.platformRole.create({
             data: {
                 name,
@@ -70,11 +96,16 @@ export const createPlatformRole = async (req, res) => {
         });
 
         res.status(201).json({ success: true, role });
+
     } catch (err) {
         logger.error(`[createPlatformRole] error: ${err.message}`, err);
-        res.status(500).json({ success: false, message: "Failed to create platform role" });
+        res.status(500).json({
+            success: false,
+            message: "Failed to create platform role"
+        });
     }
 };
+
 
 /**
  * List Platform Roles

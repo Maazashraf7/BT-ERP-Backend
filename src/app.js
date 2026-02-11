@@ -14,7 +14,6 @@ import superAdminAuthRoutes from "./modules/admin/platform/superadmin.routes.js"
 import superAdminTenantRoutes from "./modules/admin/tenants/tenant.routes.js";
 import Subscription_Plan from "./modules/admin/subscription/subscription.routes.js";
 import { loginTenant } from "./modules/admin/tenants/tenant.controller.js";
-import domainRoutes from "./modules/admin/feature_domain/feature_domain.route.js";
 import levelPowerRoutes from "./modules/admin/levelpower/levelpower.routes.js";
 import featureRoutes from "./modules/admin/Features/features.route.js";
 import permissionRoutes from "./modules/admin/tenants/permissions/permission.routes.js";
@@ -182,12 +181,17 @@ app.use(`${API_V1}/super-admin/auth`, superAdminAuthRoutes); // Login/Management
 app.use(`${API_V1}/super-admin/tenants`, superAdminTenantRoutes);
 app.use(`${API_V1}/super-admin/subscription`, Subscription_Plan);
 app.use(`${API_V1}/super-admin/features/domain`, featureDomainRoutes);
-
-
-
-
-
 app.use(`${API_V1}/super-admin/features`, featureRoutes);
+
+// platform Routers
+app.use(`${API_V1}/super-admin/platform-roles`, platformRoleRoutes);
+
+
+
+
+
+
+
 app.use(`${API_V1}/super-admin/permissions`, permissionRoutes); // Permissions CRUD
 app.use(`${API_V1}/super-admin/level-power`, levelPowerRoutes);
 
@@ -201,20 +205,19 @@ app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
 
 
 // Global Tenant Login
-app.post(`${API_V1}/auth/tenant/login`, loginTenant);
 
 // Global Platform Management Staff Management (Global)
 app.use(`${API_V1}/super-admin/platform-management`, platformManagementRoutes);
-app.use(`${API_V1}/super-admin/platform-roles`, platformRoleRoutes);
 app.use(`${API_V1}/super-admin/platform-permissions`, platformPermissionRoutes);
 
 // Mounts all tenant functionality under /api/v1/:tenantName/
-app.use(`${API_V1}/tenant/:tenantName`, tenantRouter);
 
 // Subscription Payment Routes
+
+
 app.use(`${API_V1}/subscription-payment`, subscriptionPaymentRoutes);
-
-
+app.post(`${API_V1}/auth/tenant/login`, loginTenant);
+app.use(`${API_V1}/tenant/:tenantName`, tenantRouter);
 
 
 
