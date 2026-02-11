@@ -12,6 +12,7 @@ import { requirePermission } from "../../../core/middlewares/permission.middlewa
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
 import { checkSuperAdmin } from "../../../core/middlewares/superadmin.middleware.js";
 import { assignDomainToSubscription, removeDomainFromSubscription, getAllDomainsInSubscription } from "./subscription.and.Domain.controller.js";
+import { checkSubscription } from "../../../core/middlewares/subscription.middleware.js";
 
 const router = Router();
 
@@ -21,7 +22,7 @@ router.get("/", listSubscriptions);
 
 
 router.use(authMiddleware);
-router.use(checkSuperAdmin);
+router.use(checkSubscription);
 
 router.get("/all-domains", getAllDomainsInSubscription);
 router.post("/assign-domain", assignDomainToSubscription);
