@@ -12,7 +12,7 @@ import { requirePermission } from "../../../../core/middlewares/permission.middl
 const router = Router();
 
 // Routes are already protected by tenantRouter middleware (authMiddleware and checkSubscription)
-router.use(checkDomainInPlan("STUDENT_MANAGEMENT"))
+router.use(checkDomainInPlan("ACADEMIC"))
 
 router.post("/create", requirePermission("CREATE_STUDENT"), createStudent);
 router.get("/list", requirePermission("READ_STUDENT"), listStudents);
