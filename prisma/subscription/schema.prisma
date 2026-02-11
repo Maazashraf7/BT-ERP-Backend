@@ -28,10 +28,9 @@ model Subscription_Plan_Domain {
   isActive               Boolean  @default(true)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
-
+ 
   subscription_plan Subscription_Plan   @relation(fields: [subscription_planId], references: [id], onDelete: Cascade)
   domain            TenantFeatureDomain @relation(fields: [domainId], references: [id], onDelete: Cascade)
-
   @@unique([subscription_planId, domainId])
   @@map("subscription_plan_domain")
 }

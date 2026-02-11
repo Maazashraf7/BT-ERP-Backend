@@ -144,7 +144,7 @@ export const getAllDomainsInSubscription = async (req, res) => {
             });
         }
 
-        const domains = await prisma.subscription_Plan_Domain.findMany({
+        const domainsRaw = await prisma.subscription_Plan_Domain.findMany({
             where: { subscription_planId: planId },
             include: {
                 domain: {
@@ -157,14 +157,37 @@ export const getAllDomainsInSubscription = async (req, res) => {
             }
         });
 
+        // Flatten the data for a cleaner response
+        const flattenedDomains = domainsRaw.map(planDomain => {
+            const domainInfo = planDomain.domain;
+            return {
+                domainId: planDomain.domainId,
+                domain_name: planDomain.domain_name,
+                isActive: planDomain.isActive,
+                details: {
+                    price: domainInfo?.price,
+                    description: domainInfo?.description,
+                },
+                features: domainInfo?.features.map(f => ({
+                    featureId: f.featureId,
+                    feature_name: f.feature_name,
+                    feature_code: f.feature.feature_code,
+                    description: f.feature.description,
+                    isActive: f.feature.isActive
+                })) || []
+            };
+        });
+
         res.json({
             success: true,
-            message: "Domains in plan fetched successfully",
-            count: domains.length,
-            domains,
+            message: "Domains and features in plan fetched successfully",
+            count: flattenedDomains.length,
+            domains: flattenedDomains,
         });
     } catch (error) {
-        console.error("GET DOMAINS IN PLAN ERROR:", error);
-        res.status(500).json({ success: false, message: "Failed to get domains in plan" });
+        console.error("GET DOMAINS AND FEATURES IN PLAN ERROR:", error);
+        res.status(500).json({ success: false, message: "Failed to get domains and features in plan" });
     }
 };
+
+
