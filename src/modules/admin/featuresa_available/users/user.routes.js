@@ -2,7 +2,7 @@ import { Router } from "express";
 import { createUser, getUsers, updateUserByAdmin, deleteUser, bulkCreateUsers, restoreUser, toggleUserStatus, getUserDetails, listUsers, updateMyProfile } from "./user.controller.js";
 import { authMiddleware } from "../../../../core/middlewares/auth.middleware.js";
 import { requirePermission } from "../../../../core/middlewares/permission.middleware.js";
-import { checkFeatureInPlan } from "../../../../core/middlewares/fetures.middleware.js";
+import { checkDomainInPlan } from "../../../../core/middlewares/fetures.middleware.js";
 import { checkSubscription } from "../../../../core/middlewares/subscription.middleware.js";
 
 
@@ -10,7 +10,7 @@ import { checkSubscription } from "../../../../core/middlewares/subscription.mid
 const router = Router();
 router.use(authMiddleware);
 router.use(checkSubscription)
-router.use(checkFeatureInPlan("USER_MANAGEMENT"))
+router.use(checkDomainInPlan("USER_MANAGEMENT"))
 
 router.post("/create", authMiddleware, requirePermission("USER_CREATE"), createUser);
 router.get("/", authMiddleware, requirePermission("USER_READ"), getUsers);

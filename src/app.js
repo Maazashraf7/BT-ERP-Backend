@@ -185,6 +185,7 @@ app.use(`${API_V1}/super-admin/features`, featureRoutes);
 
 // platform Routers
 app.use(`${API_V1}/super-admin/platform-roles`, platformRoleRoutes);
+app.use(`${API_V1}/super-admin/permissions`, platformPermissionRoutes); // Permissions CRUD
 
 
 
@@ -192,7 +193,6 @@ app.use(`${API_V1}/super-admin/platform-roles`, platformRoleRoutes);
 
 
 
-app.use(`${API_V1}/super-admin/permissions`, permissionRoutes); // Permissions CRUD
 app.use(`${API_V1}/super-admin/level-power`, levelPowerRoutes);
 
 

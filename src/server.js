@@ -9,7 +9,7 @@ app.listen(PORT, async () => {
 
   // Run Admin Seeder on startup
   try {
-    await seedAdminData();
+    // await seedAdminData();
   } catch (error) {
     console.error("Failed to run admin seeder:", error);
   }

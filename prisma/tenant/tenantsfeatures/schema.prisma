@@ -22,7 +22,6 @@ model TenantFeatureDomain {
   updatedAt   DateTime @updatedAt
   features    tenanFeaturedDomain_assign_features[]
   plans       Subscription_Plan_Domain[]
-
   dependencies DomainDependency[] @relation("DomainRequires")
   requiredBy   DomainDependency[] @relation("RequiredBy")
 }
