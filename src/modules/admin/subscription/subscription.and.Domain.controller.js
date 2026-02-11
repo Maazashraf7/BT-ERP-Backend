@@ -28,83 +28,107 @@ const getRecursiveDependencies = async (domainId, visited = new Set()) => {
  */
 export const assignDomainToSubscription = async (req, res) => {
     try {
-        if (!req.body) return res.status(400).json({ success: false, message: "Request body missing" });
+        // 1️⃣ Validate request body
+        if (!req.body) {
+            return res.status(400).json({
+                success: false,
+                message: "Request body missing"
+            });
+        }
+
         let { planId, domainId } = req.body;
 
         planId = planId?.trim();
         domainId = domainId?.trim();
 
         if (!planId || !domainId) {
-            return res.status(400).json({ success: false, message: "planId and domainId required" });
+            return res.status(400).json({
+                success: false,
+                message: "planId and domainId are required"
+            });
         }
 
+        // 2️⃣ Check Domain Exists
         const domain = await prisma.tenantFeatureDomain.findUnique({
-            where: { id: domainId },
+            where: { id: domainId }
         });
 
         if (!domain) {
             return res.status(404).json({
                 success: false,
-                message: `Domain not found`,
+                message: "Domain not found"
             });
         }
 
+        // 3️⃣ Check Plan Exists
         const plan = await prisma.subscription_Plan.findUnique({
-            where: { id: planId },
+            where: { id: planId }
         });
 
         if (!plan) {
             return res.status(404).json({
                 success: false,
-                message: `Plan not found`,
+                message: "Subscription plan not found"
             });
         }
 
-        // 1. Get all dependencies (recursive)
-        const allRequiredDomainsResource = await getRecursiveDependencies(domainId);
-        // Add the main domain to the list
-        const domainsToAssign = [domain, ...allRequiredDomainsResource];
+        // 4️⃣ Get Recursive Dependencies
+        const dependencies = await getRecursiveDependencies(domainId);
 
-        // 2. Filter out already assigned domains to avoid unique constraint errors
-        const existingAssignments = await prisma.subscription_Plan_Domain.findMany({
-            where: {
-                subscription_planId: planId,
-                domainId: { in: domainsToAssign.map(d => d.id) }
-            },
-            select: { domainId: true }
-        });
-
-        const existingIds = new Set(existingAssignments.map(a => a.domainId));
-        const newDomainsToAssign = domainsToAssign.filter(d => !existingIds.has(d.id));
-
-        if (newDomainsToAssign.length === 0) {
+        if (dependencies.length > 0) {
             return res.status(400).json({
                 success: false,
-                message: "Domain and all its dependencies are already assigned to this plan",
+                message:
+                    "This domain has dependencies. Please assign the required domains first before adding this domain.",
+                requiredDomains: dependencies.map(d => ({
+                    id: d.id,
+                    name: d.domain_name
+                }))
+            });
+        }
+        
+        // 5️⃣ Check if already assigned
+        const existingAssignment =
+            await prisma.subscription_Plan_Domain.findFirst({
+                where: {
+                    subscription_planId: planId,
+                    domainId: domainId
+                }
+            });
+
+        if (existingAssignment) {
+            return res.status(400).json({
+                success: false,
+                message: "Domain already assigned to this plan"
             });
         }
 
-        // 3. Create all assignments in a transaction
-        const assignments = await prisma.$transaction(
-            newDomainsToAssign.map(d => prisma.subscription_Plan_Domain.create({
+        // 6️⃣ Create Assignment
+        const assignment =
+            await prisma.subscription_Plan_Domain.create({
                 data: {
                     subscription_planId: planId,
                     subscription_plan_name: plan.name,
-                    domainId: d.id,
-                    domain_name: d.domain_name,
+                    domainId: domain.id,
+                    domain_name: domain.domain_name
                 }
-            }))
-        );
+            });
 
-        res.json({
+        return res.status(200).json({
             success: true,
-            message: `Successfully assigned ${assignments.length} domain(s) to plan (including dependencies)`,
-            assignedDetails: assignments.map(a => a.domain_name),
+            message: "Domain successfully assigned to subscription plan",
+            data: assignment
         });
+
     } catch (error) {
         console.error("ASSIGN DOMAIN TO PLAN ERROR:", error);
-        res.status(500).json({ success: false, message: "Failed to assign domain to plan" });
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to assign domain to subscription plan"
+        });
     }
+
 };
 
 

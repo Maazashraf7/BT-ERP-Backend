@@ -67,7 +67,7 @@ export const listFeatures = async (req, res) => {
             include: {
                 domains: {
                     include: {
-                        feature_domain: true
+                        domain: true
                     }
                 }
             }
@@ -92,9 +92,17 @@ export const getFeatureDetails = async (req, res) => {
         const feature = await prisma.feature.findUnique({
             where: { id: featureId },
             include: {
-                plans: {
+                domains: {
                     include: {
-                        subscription_plan: true
+                        domain: {
+                            include: {
+                                plans: {
+                                    include: {
+                                        subscription_plan: true
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
