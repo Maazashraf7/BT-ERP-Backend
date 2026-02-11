@@ -41,6 +41,7 @@ export const checkDomainInPlan = (domainName) => {
         where: {
           subscription_planId: tenant.subscription_planId,
           domain_name: domainName,
+          
         },
       });
 

@@ -35,10 +35,24 @@ export const createDomain = async (req, res) => {
             requiresId: depId
           }))
         } : undefined
+      },
+      include: {
+        features: { include: { feature: true } },
+        dependencies: { include: { requires: true } }
       }
     });
 
-    res.status(201).json(domain);
+    const flattenedDomain = {
+      ...domain,
+      features: domain.features.map(f => ({ ...f.feature, assignmentId: f.id })),
+      dependencies: domain.dependencies.map(d => ({ ...d.requires, dependencyId: d.id }))
+    };
+
+    res.status(201).json({
+      success: true,
+      message: "Domain created successfully",
+      domain: flattenedDomain
+    });
   } catch (error) {
     if (error.code === "P2002") {
       return res.status(409).json({ message: "Domain already exists" });
@@ -59,13 +73,17 @@ export const addDomainDependency = async (req, res) => {
     }
 
     const dependency = await prisma.domainDependency.create({
-      data: { domainId, requiresId }
+      data: { domainId, requiresId },
+      include: { requires: true }
     });
 
     res.status(201).json({
       success: true,
       message: "Dependency added successfully",
-      dependency
+      dependency: {
+        ...dependency.requires,
+        dependencyId: dependency.id
+      }
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to add dependency", error: error.message });
@@ -104,6 +122,11 @@ export const getAllDomains = async (req, res) => {
           include: {
             feature: true
           }
+        },
+        dependencies: {
+          include: {
+            requires: true
+          }
         }
       },
       orderBy: { createdAt: "desc" }
@@ -120,12 +143,17 @@ export const getAllDomains = async (req, res) => {
       features: domain.features.map(f => ({
         ...f.feature,
         assignmentId: f.id // include the join table ID if needed for removal
+      })),
+      dependencies: domain.dependencies.map(d => ({
+        ...d.requires,
+        dependencyId: d.id
       }))
     }));
 
     res.json({
       success: true,
-      domains: rawDomains
+      domains: domains,
+      allFeatures // Optionally include this if the frontend needs it, though it wasn't used before
     });
   } catch (error) {
     console.error("GET ALL DOMAINS ERROR:", error);
@@ -148,6 +176,11 @@ export const getDomainById = async (req, res) => {
           include: {
             feature: true
           }
+        },
+        dependencies: {
+          include: {
+            requires: true
+          }
         }
       }
     });
@@ -155,12 +188,16 @@ export const getDomainById = async (req, res) => {
       return res.status(404).json({ message: "Domain not found" });
     }
 
-    // 🔍 Flatten features for the frontend
+    // 🔍 Flatten features and dependencies for the frontend
     const flattenedDomain = {
       ...domain,
       features: domain.features.map(f => ({
         ...f.feature,
         assignmentId: f.id
+      })),
+      dependencies: domain.dependencies.map(d => ({
+        ...d.requires,
+        dependencyId: d.id
       }))
     };
 
@@ -201,13 +238,23 @@ export const updateDomain = async (req, res) => {
 
     const domain = await prisma.tenantFeatureDomain.update({
       where: { id },
-      data: { domain_name }
+      data: { domain_name },
+      include: {
+        features: { include: { feature: true } },
+        dependencies: { include: { requires: true } }
+      }
     });
+
+    const flattenedDomain = {
+      ...domain,
+      features: domain.features.map(f => ({ ...f.feature, assignmentId: f.id })),
+      dependencies: domain.dependencies.map(d => ({ ...d.requires, dependencyId: d.id }))
+    };
 
     res.json({
       success: true,
       message: "Domain updated successfully",
-      domain
+      domain: flattenedDomain
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to update domain", error });
