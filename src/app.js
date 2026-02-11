@@ -8,7 +8,6 @@ import { authMiddleware } from "./core/middlewares/auth.middleware.js";
 import platformDashboardRoutes from "./platform/dashboard/dashboard.routes.js";
 import platformAuditRoutes from "./platform/audit/audit.routes.js";
 import modulesRoutes from "./platform/modules/module.routes.js";
-import tenantsfeaturesRoutes from "./modules/admin/tenants/tenants_and_features/tenantsfeatures.route.js";
 
 
 import superAdminAuthRoutes from "./modules/admin/platform/superadmin.routes.js";
@@ -190,7 +189,6 @@ app.use(`${API_V1}/super-admin/features/domain`, featureDomainRoutes);
 
 app.use(`${API_V1}/super-admin/features`, featureRoutes);
 app.use(`${API_V1}/super-admin/permissions`, permissionRoutes); // Permissions CRUD
-app.use(`${API_V1}/super-admin/tenant-features`, tenantsfeaturesRoutes);
 app.use(`${API_V1}/super-admin/level-power`, levelPowerRoutes);
 
 

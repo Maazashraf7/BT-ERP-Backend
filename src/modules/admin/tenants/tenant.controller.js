@@ -407,10 +407,6 @@ export const getTenantDetails = async (req, res) => {
       },
     });
 
-    const domain = await prisma.domain.findUnique({
-      where: { tenant_id: tenantId },
-    });
-
     if (!tenant) {
       return res.status(404).json({
         success: false,
@@ -422,7 +418,6 @@ export const getTenantDetails = async (req, res) => {
       tenant: {
         ...tenant,
         plan: tenant.subscription_plan?.name ?? "NONE",
-        domain: domain,
       }
     });
   } catch (error) {

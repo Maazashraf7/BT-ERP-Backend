@@ -27,7 +27,6 @@ model Tenant {
   roles                TenantRole[]
   auditLogs            AuditLog[]
   loginAttempts        LoginAttempt[]
-  tenantsfeatures      tenantsfeatures[]
   levelPowers          levelPower[]
   tenantStaff          TenantStaff[]
   permissionDomains    TenantPermissionDomain[]
