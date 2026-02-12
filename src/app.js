@@ -16,7 +16,6 @@ import Subscription_Plan from "./modules/admin/subscription/subscription.routes.
 import { loginTenant } from "./modules/admin/tenants/tenant.controller.js";
 import levelPowerRoutes from "./modules/admin/levelpower/levelpower.routes.js";
 import featureRoutes from "./modules/admin/features/features.route.js";
-import permissionRoutes from "./modules/admin/tenants/permissions/permission.routes.js";
 import platformManagementRoutes from "./modules/admin/platform/staff.routes.js";
 import platformRoleRoutes from "./modules/admin/platform/role.routes.js";
 import platformPermissionRoutes from "./modules/admin/platform/permission.routes.js";
