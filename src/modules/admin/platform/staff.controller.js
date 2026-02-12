@@ -7,7 +7,7 @@ import logger from "../../../core/utils/logger.js";
 /**
  * Register Global Platform Management Staff (Superadmin level)
  */
-export const registerPlatformManagement = async (req, res) => {
+export const registerPlatformStaff = async (req, res) => {
     try {
         const { email, password, name, roleId, power } = req.body;
         const actorUserId = req.user.id;
@@ -77,7 +77,7 @@ export const registerPlatformManagement = async (req, res) => {
 /**
  * List Global Platform Management Staff
  */
-export const listPlatformManagement = async (req, res) => {
+export const listPlatformStaff = async (req, res) => {
     try {
         const staff = await prisma.platform_staff.findMany({
             include: {
@@ -99,9 +99,9 @@ export const listPlatformManagement = async (req, res) => {
 };
 
 /**
- * Update Global Platform Management Staff
+ * Update Global Platform Staff
  */
-export const updatePlatformManagement = async (req, res) => {
+export const updatePlatformStaff = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, isActive, password, roleId, power } = req.body;
@@ -150,9 +150,9 @@ export const updatePlatformManagement = async (req, res) => {
 }
 
 /**
- * Delete Global Platform Management Staff
+ * Delete Global Platform Staff
  */
-export const deletePlatformManagement = async (req, res) => {
+export const deletePlatformStaff = async (req, res) => {
     try {
         const { id } = req.params;
         const actorUserId = req.user.id;
@@ -188,9 +188,9 @@ export const deletePlatformManagement = async (req, res) => {
 }
 
 /**
- * Login Global Platform Management Staff
+ * Login Global Platform Staff
  */
-export const loginPlatformManagement = async (req, res) => {
+export const loginPlatformStaff = async (req, res) => {
     try {
         const { email, password } = req.body;
 
