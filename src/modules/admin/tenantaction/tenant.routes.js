@@ -12,9 +12,9 @@ import adminSidebarRoutes from "../tenants/sidebar/sidebar.routes.js";
 import auditRoutes from "../../audit/audit.routes.js";
 import tenantRoutes from "../tenants/tenant.routes.js";
 import featureRoutes from "../features/features.route.js";
-import studentRoutes from "../featuresa_available/student/student.route.js";
-import teacherRoutes from "../featuresa_available/teachers/teachers.route.js";
-import examinationRoutes from "../featuresa_available/examination_portal/examination.route.js";
+import studentRoutes from "../featuresa_available/education/student/student.route.js";
+import teacherRoutes from "../featuresa_available/education/teachers/teachers.route.js";
+import examinationRoutes from "../featuresa_available/education/examination_portal/examination.route.js";
 
 // Middleware
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";

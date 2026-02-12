@@ -1,4 +1,4 @@
-import prisma from "../../../../core/config/db.js";
+import prisma from "../../../../../core/config/db.js";
 
 /**
  * 👩‍🏫 Create Teacher

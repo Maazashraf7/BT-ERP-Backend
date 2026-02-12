@@ -40,9 +40,9 @@ export const authMiddleware = async (req, res, next) => {
         type: "SUPER_ADMIN",
       };
     }
-    else if (decoded.type === "STAFF") {
+    else if (decoded.type === "PLATFORM_STAFF") {
       // ✅ Handle Global Management Staff
-      const staff = await prisma.managementStaff.findUnique({
+      const staff = await prisma.platform_staff.findUnique({
         where: { id: decoded.userId },
       });
 
@@ -57,7 +57,7 @@ export const authMiddleware = async (req, res, next) => {
         role: staff.role,
         role_name: staff.role_name,
         power: staff.power,
-        type: "STAFF",
+        type: "PLATFORM_STAFF",
       };
     }
     else if (decoded.type === "TENANT_STAFF") {

@@ -9,7 +9,7 @@ import logger from "../../../core/utils/logger.js";
  */
 export const registerPlatformStaff = async (req, res) => {
     try {
-        const { email, password, name, roleId, power } = req.body;
+        const { email, password, name, roleId } = req.body;
         const actorUserId = req.user.id;
         const actorType = req.user.type;
         const actorPower = parseInt(req.user.power || "0");
@@ -17,10 +17,13 @@ export const registerPlatformStaff = async (req, res) => {
         if (!email || !password) {
             return res.status(400).json({ success: false, message: "Email and password are required" });
         }
-
+        const role = await prisma.platform_role.findUnique({ where: { id: roleId } });
+        if (!role) {
+            return res.status(404).json({ success: false, message: "Role not found" });
+        }
         // 1. Power Level Validation: Creator must have power level >= target power
-        const targetPower = parseInt(power || "10");
-        if (actorType !== "SUPER_ADMIN" && actorPower < targetPower) {
+        const targetPower = parseInt(role.power);
+        if (actorType !== "SUPER_ADMIN" && actorPower <= targetPower) {
             return res.status(403).json({
                 success: false,
                 message: `Insufficient power level. Your power (${actorPower}) is lower than the target power (${targetPower}).`
@@ -221,7 +224,7 @@ export const loginPlatformStaff = async (req, res) => {
                 userId: staff.id,
                 email: staff.email,
                 role: staff.role?.name || "STAFF",
-                type: "PLATFORM_MANAGEMENT",
+                type: "PLATFORM_STAFF",
                 power: staff.power
             },
             process.env.JWT_SECRET,
@@ -238,6 +241,7 @@ export const loginPlatformStaff = async (req, res) => {
         res.json({
             success: true,
             message: "Platform Management Staff login successful",
+            token,
             user: {
                 id: staff.id,
                 email: staff.email,

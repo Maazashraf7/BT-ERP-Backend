@@ -6,8 +6,8 @@ import {
     updateStudent,
     deleteStudent
 } from "./student.controller.js";
-import { checkDomainInPlan } from "../../../../core/middlewares/fetures.middleware.js";
-import { requirePermission } from "../../../../core/middlewares/permission.middleware.js";
+import { checkDomainInPlan } from "../../../../../core/middlewares/fetures.middleware.js";
+import { requirePermission } from "../../../../../core/middlewares/permission.middleware.js";
 
 const router = Router();
 
