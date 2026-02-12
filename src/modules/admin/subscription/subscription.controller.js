@@ -69,7 +69,19 @@ export const listSubscriptions = async (req, res) => {
   try {
     const plans = await prisma.subscription_Plan.findMany({
       include: {
-        domains: true,
+        domains: {
+          include: {
+            domain: {
+              include: {
+                features: {
+                  include: {
+                    feature: true
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       orderBy: { createdAt: "desc" },
     });
