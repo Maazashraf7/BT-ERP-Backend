@@ -141,6 +141,18 @@ export const createPlatformPermissionDomain = async (req, res) => {
 export const listPlatformPermissionDomains = async (req, res) => {
     try {
         const domains = await prisma.platformPermissionDomain.findMany({
+            include: {
+                permissions: {
+                    select: {
+                        id: true,
+                        key: true,
+                        name: true
+                    }
+                },
+                _count: {
+                    select: { permissions: true }
+                }
+            },
             orderBy: { name: "asc" }
         });
 
