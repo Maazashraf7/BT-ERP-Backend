@@ -5,12 +5,9 @@ import { writeAuditLog } from "../../../platform/audit/audit.helper.js";
 /**
  * Create Platform Permission
  */
-/**
- * Create Platform Permission
- */
 export const createPlatformPermission = async (req, res) => {
     try {
-        const { key, name, description, domainIds } = req.body;
+        const { key, name, description, domainId } = req.body;
         if (!key || !name) return res.status(400).json({ success: false, message: "Key and name required" });
 
         const upperKey = key.trim().toUpperCase();
@@ -23,8 +20,8 @@ export const createPlatformPermission = async (req, res) => {
                 key: upperKey,
                 name,
                 description,
-                domains: domainIds && Array.isArray(domainIds) ? {
-                    connect: domainIds.map(id => ({ id }))
+                domain: domainId ? {
+                    connect: { id: domainId }
                 } : undefined
             }
         });
@@ -42,11 +39,11 @@ export const createPlatformPermission = async (req, res) => {
 export const updatePlatformPermission = async (req, res) => {
     try {
         const { id } = req.params;
-        const { key, name, description, domainIds } = req.body;
+        const { key, name, description, domainId } = req.body;
 
         const existing = await prisma.platformPermission.findUnique({
             where: { id },
-            include: { domains: true }
+            include: { domain: true }
         });
         if (!existing) return res.status(404).json({ success: false, message: "Platform permission not found" });
 
@@ -56,8 +53,8 @@ export const updatePlatformPermission = async (req, res) => {
                 key,
                 name,
                 description,
-                domains: domainIds && Array.isArray(domainIds) ? {
-                    set: domainIds.map(id => ({ id }))
+                domain: domainId ? {
+                    connect: { id: domainId }
                 } : undefined
             }
         });
@@ -75,7 +72,7 @@ export const updatePlatformPermission = async (req, res) => {
 export const listPlatformPermissions = async (req, res) => {
     try {
         const permissions = await prisma.platformPermission.findMany({
-            include: { domains: true },
+            include: { domain: true },
             orderBy: { key: "asc" }
         });
         res.json({ success: true, permissions });
@@ -142,36 +139,36 @@ export const createPlatformPermissionDomain = async (req, res) => {
 };
 
 export const listPlatformPermissionDomains = async (req, res) => {
-  try {
-    const domains = await prisma.platformPermissionDomain.findMany({
-      include: {
-        permissions: {
-          select: {
-            id: true,
-            key: true,
-            name: true
-          }
-        },
-        _count: {
-          select: { permissions: true }
-        }
-      },
-      orderBy: { name: "asc" }
-    });
+    try {
+        const domains = await prisma.platformPermissionDomain.findMany({
+            include: {
+                permissions: {
+                    select: {
+                        id: true,
+                        key: true,
+                        name: true
+                    }
+                },
+                _count: {
+                    select: { permissions: true }
+                }
+            },
+            orderBy: { name: "asc" }
+        });
 
-    return res.status(200).json({
-      success: true,
-      data: domains
-    });
+        return res.status(200).json({
+            success: true,
+            data: domains
+        });
 
-  } catch (error) {
-    console.error("List Domain Error:", error);
+    } catch (error) {
+        console.error("List Domain Error:", error);
 
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error"
-    });
-  }
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
 };
 
 export const updatePlatformPermissionDomain = async (req, res) => {
@@ -195,7 +192,7 @@ export const deletePlatformPermissionDomain = async (req, res) => {
         // Check if domain has permissions
         const count = await prisma.platformPermission.count({
             where: {
-                domains: { some: { id } }
+                domainId: id
             }
         });
 
