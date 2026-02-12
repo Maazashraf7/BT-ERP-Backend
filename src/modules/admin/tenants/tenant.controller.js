@@ -28,45 +28,28 @@ export const createTenant = async (req, res) => {
     const superAdminId = req.user.id;
 
 
-    // 🔍 Case-insensitive and Space-insensitive Check
-    const normalizedNewName = tenantName?.replace(/\s+/g, '').toLowerCase();
-    const normalizedNewUsername = tenantUsername?.replace(/\s+/g, '').toLowerCase();
-    const normalizedNewEmail = tenantEmail?.toLowerCase();
-    const normalizedNewPhone = tenantPhone?.replace(/\s+/g, '');
-
-    const existingTenants = await prisma.tenant.findMany({
-      select: {
-        tenantName: true,
-        tenantUsername: true,
-        tenantEmail: true,
-        tenantPhone: true
+    // 🔍 Efficient Case-insensitive Duplicate Check directly in DB
+    const existingTenant = await prisma.tenant.findFirst({
+      where: {
+        OR: [
+          { tenantName: { equals: tenantName, mode: 'insensitive' } },
+          { tenantUsername: { equals: tenantUsername, mode: 'insensitive' } },
+          { tenantEmail: { equals: tenantEmail, mode: 'insensitive' } },
+          { tenantPhone: { equals: tenantPhone } }
+        ]
       }
     });
 
-    const isDuplicate = existingTenants.find(t => {
-      const dbName = t.tenantName?.replace(/\s+/g, '').toLowerCase();
-      const dbUsername = t.tenantUsername?.replace(/\s+/g, '').toLowerCase();
-      const dbEmail = t.tenantEmail?.toLowerCase();
-      const dbPhone = t.tenantPhone?.replace(/\s+/g, '');
-
-      return (
-        (dbName && dbName === normalizedNewName) ||
-        (dbUsername && dbUsername === normalizedNewUsername) ||
-        (dbEmail && dbEmail === normalizedNewEmail) ||
-        (dbPhone && dbPhone === normalizedNewPhone)
-      );
-    });
-
-    if (isDuplicate) {
+    if (existingTenant) {
       let conflictField = "";
-      if (isDuplicate.tenantName?.replace(/\s+/g, '').toLowerCase() === normalizedNewName) conflictField = "name";
-      else if (isDuplicate.tenantUsername?.replace(/\s+/g, '').toLowerCase() === normalizedNewUsername) conflictField = "username";
-      else if (isDuplicate.tenantEmail?.toLowerCase() === normalizedNewEmail) conflictField = "email";
-      else if (isDuplicate.tenantPhone?.replace(/\s+/g, '') === normalizedNewPhone) conflictField = "phone number";
+      if (existingTenant.tenantName?.toLowerCase() === tenantName?.toLowerCase()) conflictField = "name";
+      else if (existingTenant.tenantUsername?.toLowerCase() === tenantUsername?.toLowerCase()) conflictField = "username";
+      else if (existingTenant.tenantEmail?.toLowerCase() === tenantEmail?.toLowerCase()) conflictField = "email";
+      else if (existingTenant.tenantPhone === tenantPhone) conflictField = "phone number";
 
       return res.status(400).json({
         success: false,
-        message: `Tenant already exists with this ${conflictField} (matches case and spaces insensitively)`,
+        message: `Tenant already exists with this ${conflictField} (matches case-insensitively)`,
       });
     }
 

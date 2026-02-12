@@ -27,7 +27,7 @@ export const createSubscriptionOrder = async (req, res) => {
         const options = {
             amount,
             currency: "INR",
-            receipt: `receipt_plan_${planId}_${Date.now()}`,
+            receipt: `rcpt_${planId.substring(0, 8)}_${Date.now()}`,
         };
 
         const order = await razorpay.orders.create(options);
@@ -42,7 +42,11 @@ export const createSubscriptionOrder = async (req, res) => {
 
     } catch (error) {
         console.error("CREATE RAZORPAY ORDER ERROR:", error);
-        res.status(500).json({ success: false, message: "Failed to create payment order" });
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to create payment order",
+            error: error
+        });
     }
 };
 
@@ -50,6 +54,122 @@ export const createSubscriptionOrder = async (req, res) => {
  * 👑 Verify Payment and Activate Subscription
  * POST /api/v1/subscription-payment/verify
  */
+/**
+ * 👑 Create a static QR Code for Subscription
+ * POST /api/v1/subscription-payment/create-qr
+ */
+export const createSubscriptionQr = async (req, res) => {
+    try {
+        const { planId } = req.body;
+        console.log("DEBUG: createSubscriptionQr for planId:", planId);
+
+        if (!planId) {
+            return res.status(400).json({ success: false, message: "planId is required" });
+        }
+
+        const plan = await prisma.subscription_Plan.findUnique({ where: { id: planId } });
+        console.log("DEBUG: Plan found:", plan ? plan.name : "NOT FOUND");
+
+        if (!plan || !plan.isActive) {
+            return res.status(404).json({ success: false, message: "Active subscription plan not found" });
+        }
+
+        console.log("DEBUG: Sending request to Razorpay for QR...");
+        const qrCode = await razorpay.qrCode.create({
+            type: "upi_qr",
+            name: `Plan_${plan.name.substring(0, 20)}`, // Limit name length
+            usage: "single_payment",
+            fixed_amount: true,
+            payment_amount: Math.round(plan.price * 100), // in paise
+            description: `Pay for ${plan.name.substring(0, 20)}`,
+        });
+        console.log("DEBUG: Razorpay QR created successfully ID:", qrCode.id);
+
+        res.json({
+            success: true,
+            qr_id: qrCode.id,
+            image_url: qrCode.image_url,
+            payload: qrCode.payload
+        });
+    } catch (error) {
+        console.error("QR CREATE ERROR:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to create QR code",
+            error: process.env.NODE_ENV === 'development' ? error : undefined
+        });
+    }
+};
+
+/**
+ * 👑 Check QR payment status (Polling)
+ * GET /api/v1/subscription-payment/check-status/:qrId
+ */
+export const checkPaymentStatus = async (req, res) => {
+    try {
+        const { qrId } = req.params;
+        const { planId } = req.query; // We need planId to activate the plan
+        const tenantId = req.user.tenantId || req.user.id;
+
+        if (!qrId || !planId) {
+            return res.status(400).json({ success: false, message: "qrId and planId are required" });
+        }
+
+        // Fetch payments for this QR code
+        const payments = await razorpay.qrCode.fetchAllPayments(qrId);
+
+        // Check if any payment is captured/authorized
+        const successfulPayment = payments.items.find(p => p.status === 'captured' || p.status === 'authorized');
+
+        if (successfulPayment) {
+            // Activate subscription (reuse logic from verifyPayment but simplified)
+            const plan = await prisma.subscription_Plan.findUnique({ where: { id: planId } });
+            if (!plan) return res.status(404).json({ success: false, message: "Plan not found" });
+
+            const result = await prisma.$transaction(async (tx) => {
+                const startDate = new Date();
+                const endDate = new Date();
+                endDate.setDate(endDate.getDate() + (plan.duration || 30));
+
+                const updatedTenant = await tx.tenant.update({
+                    where: { id: tenantId },
+                    data: {
+                        subscription_planId: planId,
+                        subscription_plan_start_date: startDate,
+                        subscription_plan_end_date: endDate,
+                        isActive: true,
+                        is_plan_assigned: true,
+                    },
+                });
+
+                await tx.tenantPlanHistory.create({
+                    data: {
+                        tenant_id: tenantId,
+                        subscription_plan_id: planId,
+                        plan_name: plan.name,
+                        expires_at: endDate,
+                        status: "ACTIVE",
+                    },
+                });
+
+                return updatedTenant;
+            });
+
+            return res.json({
+                success: true,
+                message: "Payment successful and plan activated",
+                tenant: { id: result.id, plan: plan.name, expiry: result.subscription_plan_end_date }
+            });
+        }
+
+        res.json({ success: false, message: "Payment pending" });
+
+    } catch (error) {
+        console.error("CHECK STATUS ERROR:", error);
+        res.status(500).json({ success: false, message: "Error checking payment status" });
+    }
+};
+
 export const verifyPayment = async (req, res) => {
     try {
         const {
@@ -132,3 +252,4 @@ export const verifyPayment = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to verify payment and activate subscription" });
     }
 };
+
