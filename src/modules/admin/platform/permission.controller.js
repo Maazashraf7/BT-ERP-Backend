@@ -142,15 +142,36 @@ export const createPlatformPermissionDomain = async (req, res) => {
 };
 
 export const listPlatformPermissionDomains = async (req, res) => {
-    try {
-        const domains = await prisma.platformPermissionDomain.findMany({
-            include: { _count: { select: { permissions: true } } },
-            orderBy: { name: "asc" }
-        });
-        res.json({ success: true, domains });
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Failed to list domains" });
-    }
+  try {
+    const domains = await prisma.platformPermissionDomain.findMany({
+      include: {
+        permissions: {
+          select: {
+            id: true,
+            key: true,
+            name: true
+          }
+        },
+        _count: {
+          select: { permissions: true }
+        }
+      },
+      orderBy: { name: "asc" }
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: domains
+    });
+
+  } catch (error) {
+    console.error("List Domain Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error"
+    });
+  }
 };
 
 export const updatePlatformPermissionDomain = async (req, res) => {
