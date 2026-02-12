@@ -10,6 +10,7 @@ export const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
       token = authHeader.split(" ")[1];
+      console.log("Auth Debug - Token from Header ffffffffff:", token ? "FOUND" : "MISSING");
     }
   }
 

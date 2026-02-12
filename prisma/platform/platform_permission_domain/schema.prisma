@@ -1,12 +1,12 @@
 
 model PlatformPermissionDomain {
-  id          String       @id @default(uuid())
-  name        String       @unique
+  id          String                        @id @default(uuid())
+  name        String                        @unique
   description String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime                      @default(now())
+  updatedAt   DateTime                      @updatedAt
 
-  permissions PlatformPermission[]
+  permissions PlatformPermissionDomainMap[]
 
   @@map("platform_permission_domain")
 }

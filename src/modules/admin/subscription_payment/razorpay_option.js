@@ -1,4 +1,4 @@
-const options = {
+import Razorpay from "razorpay";const options = {
   key: response.key,
   amount: response.amount,
   currency: "INR",
