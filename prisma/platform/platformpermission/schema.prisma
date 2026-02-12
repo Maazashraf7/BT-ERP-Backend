@@ -4,7 +4,8 @@ model PlatformPermission {
   key              String                   @unique
   name             String
   description      String?
-  domains          PlatformPermissionDomain[]
+  domainId         String
+  domain           PlatformPermissionDomain @relation(fields: [domainId], references: [id], onDelete: Cascade)
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
 

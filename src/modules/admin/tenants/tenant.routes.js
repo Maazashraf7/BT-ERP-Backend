@@ -10,6 +10,7 @@ import {
 } from "./tenant.controller.js";
 
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
+import { requirePermission } from "../../../core/middlewares/permission.middleware.js";
 
 const router = Router();
 
@@ -22,24 +23,24 @@ router.get("/:tenantId/plan-history", (req, res, next) => {
   tenatPlanHistory(req, res, next);
 });
 
-router.get("/", listTenants);
+router.get("/", requirePermission("VIEW_TENANT"), listTenants);
 // Create tenant (onboarding)
-router.post("/", createTenant);
+router.post("/", requirePermission("CREATE_TENANT"), createTenant);
 
 
 // Get all tenants (list)
 
 // Get tenant details
-router.get("/:tenantId", getTenantDetails);
+router.get("/:tenantId", requirePermission("VIEW_TENANT"), getTenantDetails);
 
 // Update tenant details
-router.put("/:tenantId", updateTenant);
+router.put("/:tenantId", requirePermission("UPDATE_TENANT"), updateTenant);
 
 // Delete tenant
-router.delete("/:tenantId", deleteTenant);
+router.delete("/:tenantId", requirePermission("DELETE_TENANT"), deleteTenant);
 
 // Activate / Deactivate tenant
-router.patch("/:tenantId/status", toggleTenantStatus);
+router.patch("/:tenantId/status", requirePermission("TOGGLE_TENANT_STATUS"), toggleTenantStatus);
 
 // router.get("/:tenantId/plan-history", tenatPlanHistory); // Moved to top
 
