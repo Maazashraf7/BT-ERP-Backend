@@ -16,8 +16,7 @@ import Subscription_Plan from "./modules/admin/subscription/subscription.routes.
 import { loginTenant } from "./modules/admin/tenants/tenant.controller.js";
 import levelPowerRoutes from "./modules/admin/levelpower/levelpower.routes.js";
 import featureRoutes from "./modules/admin/features/features.route.js";
-import permissionRoutes from "./modules/admin/tenants/permissions/permission.routes.js";
-import platformManagementRoutes from "./modules/admin/platform/staff.routes.js";
+import platformstaffRoutes from "./modules/admin/platform/staff.routes.js";
 import platformRoleRoutes from "./modules/admin/platform/role.routes.js";
 import platformPermissionRoutes from "./modules/admin/platform/permission.routes.js";
 import featureDomainRoutes from "./modules/admin/feature_domain/feature_domain.route.js";
@@ -186,6 +185,7 @@ app.use(`${API_V1}/super-admin/features`, featureRoutes);
 // platform Routers
 app.use(`${API_V1}/super-admin/platform-roles`, platformRoleRoutes);
 app.use(`${API_V1}/super-admin/permissions`, platformPermissionRoutes); // Permissions CRUD
+app.use(`${API_V1}/super-admin/platform-staff`, platformstaffRoutes);
 
 
 
@@ -207,7 +207,6 @@ app.use(`${API_V1}/super-admin/modules`, modulesRoutes);
 // Global Tenant Login
 
 // Global Platform Management Staff Management (Global)
-app.use(`${API_V1}/super-admin/platform-management`, platformManagementRoutes);
 app.use(`${API_V1}/super-admin/platform-permissions`, platformPermissionRoutes);
 
 // Mounts all tenant functionality under /api/v1/:tenantName/
