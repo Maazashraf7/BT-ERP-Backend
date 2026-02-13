@@ -23,7 +23,7 @@ router.use(authMiddleware);
 router.post("/", requirePermission("CREATE_PERMISSION"), createPlatformPermission);
 router.put("/:id", requirePermission("UPDATE_PERMISSION"), updatePlatformPermission);
 router.get("/", requirePermission("VIEW_PERMISSIONS"), listPlatformPermissions);
-router.post("/assign/:roleId", requirePermission("ASSIGN_PERMISSIONS"), assignPermissionsToPlatformRole);
+router.post("/assign", requirePermission("ASSIGN_PERMISSIONS"), assignPermissionsToPlatformRole);
 router.delete("/assign/:roleId/:permissionId", requirePermission("REMOVE_PERMISSION"), removePermissionFromPlatformRole);
 router.get("/assign/:roleId", requirePermission("VIEW_PERMISSIONS"), listpermissionbyroleId);
 
