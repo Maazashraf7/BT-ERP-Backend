@@ -134,21 +134,26 @@ export const listPlatformPermissions = async (req, res) => {
 export const assignPermissionsToPlatformRole = async (req, res) => {
     try {
         const { roleId } = req.params;
-        const { permissions } = req.body; // Array of permission IDs
+        const { permissionId } = req.body; // Expect single permissionId
         const actorUserId = req.user.id;
         const actorType = req.user.type;
 
-        if (!Array.isArray(permissions)) return res.status(400).json({ success: false, message: "Permissions must be an array" });
+        if (!permissionId) return res.status(400).json({ success: false, message: "Permission ID is required" });
 
         const role = await prisma.platformRole.findUnique({ where: { id: roleId } });
         if (!role) return res.status(404).json({ success: false, message: "Platform role not found" });
 
-        await prisma.$transaction([
-            prisma.platformRolePermission.deleteMany({ where: { roleId } }),
-            prisma.platformRolePermission.createMany({
-                data: permissions.map(pId => ({ roleId, permissionId: pId }))
-            })
-        ]);
+        // Upsert to assign permission (create if not exists, nothing if it does)
+        await prisma.platformRolePermission.upsert({
+            where: {
+                roleId_permissionId: {
+                    roleId,
+                    permissionId
+                }
+            },
+            create: { roleId, permissionId },
+            update: {}
+        });
 
         // 🔥 Invalidate cache so new permissions take effect immediately
         clearRoleCache(roleId);
@@ -156,17 +161,17 @@ export const assignPermissionsToPlatformRole = async (req, res) => {
         await writeAuditLog({
             actorType: actorType === "SUPER_ADMIN" ? "SUPER_ADMIN" : "PLATFORM_MANAGEMENT",
             [actorType === "SUPER_ADMIN" ? "superAdminId" : "platformManagementId"]: actorUserId,
-            action: "PLATFORM_PERMISSIONS_ASSIGNED",
+            action: "PLATFORM_PERMISSION_ASSIGNED",
             entity: "PLATFORM_ROLE",
             entityId: roleId,
-            meta: { permissionsCount: permissions.length },
+            meta: { permissionId },
             req,
         });
 
-        res.json({ success: true, message: "Permissions assigned successfully" });
+        res.json({ success: true, message: "Permission assigned successfully" });
     } catch (error) {
-        logger.error("Assign Platform Permissions Error:", error);
-        res.status(500).json({ success: false, message: "Failed to assign permissions" });
+        logger.error("Assign Platform Permission Error:", error);
+        res.status(500).json({ success: false, message: "Failed to assign permission" });
     }
 };
 
