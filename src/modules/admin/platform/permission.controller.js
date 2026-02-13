@@ -5,6 +5,9 @@ import { writeAuditLog } from "../../../platform/audit/audit.helper.js";
 /**
  * Create Platform Permission
  */
+/**
+ * Create Platform Permission
+ */
 export const createPlatformPermission = async (req, res) => {
     try {
         const { key, name, description, domainId } = req.body;
@@ -21,7 +24,9 @@ export const createPlatformPermission = async (req, res) => {
                 name,
                 description,
                 domains: (domainId && Array.isArray(domainId)) ? {
-                    create: domainId.map(dId => ({ domainId: dId }))
+                    create: domainId.map(dId => ({
+                        domain: { connect: { id: dId } }
+                    }))
                 } : undefined
             },
             include: {
@@ -58,7 +63,9 @@ export const updatePlatformPermission = async (req, res) => {
                 description,
                 domains: (domainId && Array.isArray(domainId)) ? {
                     deleteMany: {},
-                    create: domainId.map(dId => ({ domainId: dId }))
+                    create: domainId.map(dId => ({
+                        domain: { connect: { id: dId } }
+                    }))
                 } : undefined
             },
             include: {
@@ -70,6 +77,35 @@ export const updatePlatformPermission = async (req, res) => {
     } catch (error) {
         logger.error("Update Platform Permission Error:", error);
         res.status(500).json({ success: false, message: "Failed to update platform permission" });
+    }
+};
+
+/**
+ * Assign Domain to Permission (Manual)
+ */
+export const assignDomainToPermission = async (req, res) => {
+    try {
+        const { permissionId, domainIds } = req.body;
+
+        if (!permissionId || !domainIds || !Array.isArray(domainIds)) {
+            return res.status(400).json({ success: false, message: "permissionId and domainIds (array) are required" });
+        }
+
+        // Transaction to overwrite domains
+        await prisma.$transaction([
+            prisma.platformPermissionDomainMap.deleteMany({ where: { permissionId } }),
+            prisma.platformPermissionDomainMap.createMany({
+                data: domainIds.map(dId => ({
+                    permissionId,
+                    domainId: dId
+                }))
+            })
+        ]);
+
+        res.json({ success: true, message: "Domains assigned to permission successfully" });
+    } catch (error) {
+        logger.error("Assign Domain Error:", error);
+        res.status(500).json({ success: false, message: "Failed to assign domains" });
     }
 };
 
