@@ -213,7 +213,10 @@ export const listPlatformPermissionDomains = async (req, res) => {
         // Flatten the structure for a cleaner response
         const formattedDomains = domains.map(domain => ({
             ...domain,
-            permissions: domain.permissions.map(p => p.permission)
+            permissions: domain.permissions.map(p => ({
+                ...p.permission,
+                name: p.permission.key
+            }))
         }));
 
         return res.status(200).json({
@@ -249,19 +252,19 @@ export const deletePlatformPermissionDomain = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Check if domain has permissions via mapping table
-        const count = await prisma.platformPermissionDomainMap.count({
-            where: {
-                domainId: id
-            }
-        });
+        // Check if domain has permissions via mapping table - Optional check removed to allow deletion
+        // const count = await prisma.platformPermissionDomainMap.count({
+        //     where: {
+        //         domainId: id
+        //     }
+        // });
 
-        if (count > 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Cannot delete domain that has permissions assigned to it"
-            });
-        }
+        // if (count > 0) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: "Cannot delete domain that has permissions assigned to it"
+        //     });
+        // }
 
         await prisma.platformPermissionDomain.delete({ where: { id } });
         res.json({ success: true, message: "Domain deleted" });
