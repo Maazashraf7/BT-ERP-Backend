@@ -160,6 +160,21 @@ export const assignPermissionsToPlatformRole = async (req, res) => {
         if (!role) return res.status(404).json({ success: false, message: "Platform role not found" });
 
         // Upsert to assign permission (create if not exists, nothing if it does)
+        const existingPermission = await prisma.platformRolePermission.findUnique({
+            where: {
+                roleId_permissionId: {
+                    roleId,
+                    permissionId
+                }
+            }
+        });
+
+        if (existingPermission) {
+            return res.status(400).json({ success: false, message: "Permission already assigned to role" });
+        }
+
+
+
         await prisma.platformRolePermission.upsert({
             where: {
                 roleId_permissionId: {
