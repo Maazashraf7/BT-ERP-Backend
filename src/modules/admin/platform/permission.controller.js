@@ -211,7 +211,7 @@ export const assignPermissionsToPlatformRole = async (req, res) => {
  */
 export const removePermissionFromPlatformRole = async (req, res) => {
     try {
-        const { roleId, permissionId } = req.params;
+        const { roleId, permissionId } = req.body;
         const actorUserId = req.user.id;
         const actorType = req.user.type;
 
