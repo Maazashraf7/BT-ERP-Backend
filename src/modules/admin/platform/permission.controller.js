@@ -13,14 +13,14 @@ export const createPlatformPermission = async (req, res) => {
         const { key, name, description, domainId } = req.body;
         if (!key || !name) return res.status(400).json({ success: false, message: "Key and name required" });
 
-        const upperKey = key.trim().toUpperCase();
+        const upperName = name.trim().toUpperCase();
 
-        const existing = await prisma.platformPermission.findUnique({ where: { key: upperKey } });
+        const existing = await prisma.platformPermission.findUnique({ where: { key: upperName } });
         if (existing) return res.status(409).json({ success: false, message: "Permission key already exists" });
 
         const permission = await prisma.platformPermission.create({
             data: {
-                key: upperKey,
+                key: upperName,
                 name,
                 description,
                 domains: (domainId && Array.isArray(domainId)) ? {
@@ -50,7 +50,7 @@ export const updatePlatformPermission = async (req, res) => {
         const { key, name, description, domainId } = req.body;
 
         const existing = await prisma.platformPermission.findUnique({
-            where: { id },
+            where: { id },  
             include: { domains: true }
         });
         if (!existing) return res.status(404).json({ success: false, message: "Platform permission not found" });

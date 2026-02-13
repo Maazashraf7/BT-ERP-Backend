@@ -5,7 +5,7 @@ import prisma from "../../../../../core/config/db.js";
  */
 export const createStudent = async (req, res) => {
     try {
-        const { studentId, firstName, lastName, email, phone, gender, dateOfBirth, address, parentName, parentPhone } = req.body;
+        const { studentId, firstName, lastName, email, phone, gender, dateOfBirth, address, parentName, parentPhone, classId, sectionId  } = req.body;
         const { tenantId } = req.user;
 
         if (!firstName || !lastName) {
@@ -18,6 +18,8 @@ export const createStudent = async (req, res) => {
                 firstName,
                 lastName,
                 email,
+                classId,
+                sectionId,
                 phone,
                 gender,
                 dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
