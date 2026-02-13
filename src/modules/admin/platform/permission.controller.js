@@ -150,8 +150,7 @@ export const listpermissionbyroleId = async (req, res) => {
  */
 export const assignPermissionsToPlatformRole = async (req, res) => {
     try {
-        const { roleId } = req.params;
-        const { permissionId } = req.body; // Expect single permissionId
+        const { permissionId, roleId } = req.body; // Expect single permissionId
         const actorUserId = req.user.id;
         const actorType = req.user.type;
 
