@@ -6,17 +6,17 @@ import prisma from "../../../core/config/db.js";
  */
 const platformPermissions = [
     // Permission Management
-    { key: "CREATE_PERMISSION", name: "Create Permissions", description: "Allows creating new platform permissions" },
-    { key: "UPDATE_PERMISSION", name: "Update Permissions", description: "Allows updating existing platform permissions" },
-    { key: "VIEW_PERMISSIONS", name: "View Permissions", description: "Allows viewing list of platform permissions" },
-    { key: "ASSIGN_PERMISSIONS", name: "Assign Permissions", description: "Allows assigning permissions to roles" },
+    { key: "CREATE_PERMISSION", description: "Allows creating new platform permissions" },
+    { key: "UPDATE_PERMISSION", description: "Allows updating existing platform permissions" },
+    { key: "VIEW_PERMISSIONS", description: "Allows viewing list of platform permissions" },
+    { key: "ASSIGN_PERMISSIONS", description: "Allows assigning permissions to roles" },
 
     // Permission Domain Management
-    { key: "ASSIGN_DOMAIN", name: "Assign Domain", description: "Allows assigning domains to permissions" },
-    { key: "CREATE_PERMISSION_DOMAIN", name: "Create Permission Domain", description: "Allows creating new permission domains" },
-    { key: "VIEW_PERMISSION_DOMAINS", name: "View Permission Domains", description: "Allows viewing list of permission domains" },
-    { key: "UPDATE_PERMISSION_DOMAIN", name: "Update Permission Domain", description: "Allows updating permission domains" },
-    { key: "DELETE_PERMISSION_DOMAIN", name: "Delete Permission Domain", description: "Allows deleting permission domains" },
+    { key: "ASSIGN_DOMAIN", description: "Allows assigning domains to permissions" },
+    { key: "CREATE_PERMISSION_DOMAIN", description: "Allows creating new permission domains" },
+    { key: "VIEW_PERMISSION_DOMAINS", description: "Allows viewing list of permission domains" },
+    { key: "UPDATE_PERMISSION_DOMAIN", description: "Allows updating permission domains" },
+    { key: "DELETE_PERMISSION_DOMAIN", description: "Allows deleting permission domains" },
 
     // Add other permissions here as needed...
 ];
@@ -34,7 +34,6 @@ export const seedPlatformPermissions = async () => {
                 await prisma.platformPermission.create({
                     data: {
                         key: permission.key,
-                        name: permission.name,
                         description: permission.description,
                     },
                 });

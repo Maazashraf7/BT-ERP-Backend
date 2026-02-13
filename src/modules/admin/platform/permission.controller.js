@@ -10,18 +10,17 @@ import { writeAuditLog } from "../../../platform/audit/audit.helper.js";
  */
 export const createPlatformPermission = async (req, res) => {
     try {
-        const { key, name, description, domainId } = req.body;
-        if (!key || !name) return res.status(400).json({ success: false, message: "Key and name required" });
+        const { key, description, domainId } = req.body;
+        if (!key) return res.status(400).json({ success: false, message: "Name is required" });
 
         const upperKey = key.trim().toUpperCase();
 
         const existing = await prisma.platformPermission.findUnique({ where: { key: upperKey } });
-        if (existing) return res.status(409).json({ success: false, message: "Permission key already exists" });
+        if (existing) return res.status(409).json({ success: false, message: "Permission Name already exists" });
 
         const permission = await prisma.platformPermission.create({
             data: {
                 key: upperKey,
-                name,
                 description,
                 domains: (domainId && Array.isArray(domainId)) ? {
                     create: domainId.map(dId => ({
@@ -47,7 +46,7 @@ export const createPlatformPermission = async (req, res) => {
 export const updatePlatformPermission = async (req, res) => {
     try {
         const { id } = req.params;
-        const { key, name, description, domainId } = req.body;
+        const { key, description, domainId } = req.body;
 
         const existing = await prisma.platformPermission.findUnique({
             where: { id },
@@ -59,7 +58,6 @@ export const updatePlatformPermission = async (req, res) => {
             where: { id },
             data: {
                 key,
-                name,
                 description,
                 domains: (domainId && Array.isArray(domainId)) ? {
                     deleteMany: {},
@@ -135,6 +133,13 @@ export const listPlatformPermissions = async (req, res) => {
 /**
  * Assign Permissions to Platform Role
  */
+import { clearRoleCache } from "../../../core/cache/permission.cache.js";
+
+// ... [Keep other exports as they are] ...
+
+/**
+ * Assign Permissions to Platform Role
+ */
 export const assignPermissionsToPlatformRole = async (req, res) => {
     try {
         const { roleId } = req.params;
@@ -153,6 +158,9 @@ export const assignPermissionsToPlatformRole = async (req, res) => {
                 data: permissions.map(pId => ({ roleId, permissionId: pId }))
             })
         ]);
+
+        // 🔥 Invalidate cache so new permissions take effect immediately
+        clearRoleCache(roleId);
 
         await writeAuditLog({
             actorType: actorType === "SUPER_ADMIN" ? "SUPER_ADMIN" : "PLATFORM_MANAGEMENT",
