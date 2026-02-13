@@ -13,14 +13,14 @@ export const createPlatformPermission = async (req, res) => {
         const { key, name, description, domainId } = req.body;
         if (!key || !name) return res.status(400).json({ success: false, message: "Key and name required" });
 
-        const upperName = name.trim().toUpperCase();
+        const upperKey = key.trim().toUpperCase();
 
-        const existing = await prisma.platformPermission.findUnique({ where: { key: upperName } });
+        const existing = await prisma.platformPermission.findUnique({ where: { key: upperKey } });
         if (existing) return res.status(409).json({ success: false, message: "Permission key already exists" });
 
         const permission = await prisma.platformPermission.create({
             data: {
-                key: upperName,
+                key: upperKey,
                 name,
                 description,
                 domains: (domainId && Array.isArray(domainId)) ? {
@@ -50,7 +50,7 @@ export const updatePlatformPermission = async (req, res) => {
         const { key, name, description, domainId } = req.body;
 
         const existing = await prisma.platformPermission.findUnique({
-            where: { id },  
+            where: { id },
             include: { domains: true }
         });
         if (!existing) return res.status(404).json({ success: false, message: "Platform permission not found" });
@@ -83,29 +83,33 @@ export const updatePlatformPermission = async (req, res) => {
 /**
  * Assign Domain to Permission (Manual)
  */
-export const assignDomainToPermission = async (req, res) => {
+export const assignPermissionsToDomain = async (req, res) => {
     try {
-        const { permissionId, domainIds } = req.body;
+        const { domainId, permissionIds } = req.body;
 
-        if (!permissionId || !domainIds || !Array.isArray(domainIds)) {
-            return res.status(400).json({ success: false, message: "permissionId and domainIds (array) are required" });
+        if (!domainId || !permissionIds || !Array.isArray(permissionIds)) {
+            return res.status(400).json({ success: false, message: "domainId (string) and permissionIds (array) are required" });
         }
 
-        // Transaction to overwrite domains
+        // Transaction to overwrite permissions for this domain
         await prisma.$transaction([
-            prisma.platformPermissionDomainMap.deleteMany({ where: { permissionId } }),
+            // 1. Clear existing permissions for this domain
+            prisma.platformPermissionDomainMap.deleteMany({
+                where: { domainId }
+            }),
+            // 2. Assign new permissions
             prisma.platformPermissionDomainMap.createMany({
-                data: domainIds.map(dId => ({
-                    permissionId,
-                    domainId: dId
+                data: permissionIds.map(permId => ({
+                    domainId,
+                    permissionId: permId
                 }))
             })
         ]);
 
-        res.json({ success: true, message: "Domains assigned to permission successfully" });
+        res.json({ success: true, message: "Permissions assigned to domain successfully" });
     } catch (error) {
-        logger.error("Assign Domain Error:", error);
-        res.status(500).json({ success: false, message: "Failed to assign domains" });
+        logger.error("Assign Permissions To Domain Error:", error);
+        res.status(500).json({ success: false, message: "Failed to assign permissions to domain" });
     }
 };
 
