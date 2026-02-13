@@ -42,7 +42,7 @@ export const createPlatformPermission = async (req, res) => {
 export const updatePlatformPermission = async (req, res) => {
     try {
         const { id } = req.params;
-        const { key, name, description, domainIds } = req.body;
+        const { key, name, description, domainId } = req.body;
 
         const existing = await prisma.platformPermission.findUnique({
             where: { id },
@@ -56,9 +56,9 @@ export const updatePlatformPermission = async (req, res) => {
                 key,
                 name,
                 description,
-                domains: (domainIds && Array.isArray(domainIds)) ? {
+                domains: (domainId && Array.isArray(domainId)) ? {
                     deleteMany: {},
-                    create: domainIds.map(dId => ({ domainId: dId }))
+                    create: domainId.map(dId => ({ domainId: dId }))
                 } : undefined
             },
             include: {

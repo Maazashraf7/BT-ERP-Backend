@@ -60,8 +60,19 @@ export const createSubscriptionOrder = async (req, res) => {
  */
 export const createSubscriptionQr = async (req, res) => {
     try {
-        const { planId } = req.body;
+        const { planId, tenantId } = req.body;
         console.log("DEBUG: createSubscriptionQr for planId:", planId);
+
+
+        if (!tenantId) {
+            return res.status(400).json({ success: false, message: "tenantId is required" });
+        }
+
+        const checkexistingSubscription = await prisma.tenant.findUnique({ where: { id: tenantId } });
+  
+        if (checkexistingSubscription.subscription_planId) {
+            return res.status(400).json({ success: false, message: "Your subscription already exists" });
+        }
 
         if (!planId) {
             return res.status(400).json({ success: false, message: "planId is required" });
