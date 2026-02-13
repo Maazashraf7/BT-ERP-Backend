@@ -1,10 +1,8 @@
 import prisma from "../../../core/config/db.js";
 import logger from "../../../core/utils/logger.js";
 import { writeAuditLog } from "../../../platform/audit/audit.helper.js";
+import { clearRoleCache } from "../../../core/cache/permission.cache.js";
 
-/**
- * Create Platform Permission
- */
 /**
  * Create Platform Permission
  */
@@ -133,13 +131,6 @@ export const listPlatformPermissions = async (req, res) => {
 /**
  * Assign Permissions to Platform Role
  */
-import { clearRoleCache } from "../../../core/cache/permission.cache.js";
-
-// ... [Keep other exports as they are] ...
-
-/**
- * Assign Permissions to Platform Role
- */
 export const assignPermissionsToPlatformRole = async (req, res) => {
     try {
         const { roleId } = req.params;
@@ -207,7 +198,7 @@ export const listPlatformPermissionDomains = async (req, res) => {
                             select: {
                                 id: true,
                                 key: true,
-                                name: true
+                                description: true
                             }
                         }
                     }
@@ -278,4 +269,3 @@ export const deletePlatformPermissionDomain = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to delete domain" });
     }
 };
-
