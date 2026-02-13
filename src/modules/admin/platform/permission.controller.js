@@ -7,7 +7,7 @@ import { writeAuditLog } from "../../../platform/audit/audit.helper.js";
  */
 export const createPlatformPermission = async (req, res) => {
     try {
-        const { key, name, description, domainIds } = req.body;
+        const { key, name, description, domainId } = req.body;
         if (!key || !name) return res.status(400).json({ success: false, message: "Key and name required" });
 
         const upperKey = key.trim().toUpperCase();
@@ -20,8 +20,8 @@ export const createPlatformPermission = async (req, res) => {
                 key: upperKey,
                 name,
                 description,
-                domains: (domainIds && Array.isArray(domainIds)) ? {
-                    create: domainIds.map(dId => ({ domainId: dId }))
+                domains: (domainId && Array.isArray(domainId)) ? {
+                    create: domainId.map(dId => ({ domainId: dId }))
                 } : undefined
             },
             include: {
