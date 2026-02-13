@@ -8,7 +8,9 @@ import {
     listPlatformPermissionDomains,
     updatePlatformPermissionDomain,
     deletePlatformPermissionDomain,
-    assignPermissionsToDomain
+    assignPermissionsToDomain,
+    removePermissionFromPlatformRole,
+    listpermissionbyroleId
 } from "./permission.controller.js";
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
 import { requirePermission } from "../../../core/middlewares/permission.middleware.js";
@@ -22,6 +24,8 @@ router.post("/", requirePermission("CREATE_PERMISSION"), createPlatformPermissio
 router.put("/:id", requirePermission("UPDATE_PERMISSION"), updatePlatformPermission);
 router.get("/", requirePermission("VIEW_PERMISSIONS"), listPlatformPermissions);
 router.post("/assign/:roleId", requirePermission("ASSIGN_PERMISSIONS"), assignPermissionsToPlatformRole);
+router.delete("/assign/:roleId/:permissionId", requirePermission("REMOVE_PERMISSION"), removePermissionFromPlatformRole);
+router.get("/assign/:roleId", requirePermission("VIEW_PERMISSIONS"), listpermissionbyroleId);
 
 // Platform Permission Domains
 router.post("/assign-domain", requirePermission("ASSIGN_DOMAIN"), assignPermissionsToDomain);

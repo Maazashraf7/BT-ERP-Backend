@@ -5,6 +5,20 @@ import prisma from "../../../core/config/db.js";
  * Platform Permissions Seeder
  */
 const platformPermissions = [
+    //  Tenant_mangemnet
+    {key:"CREATE_TENANT",description:"Allows creating new tenant"},
+    {key:"UPDATE_TENANT",description:"Allows updating existing tenant"},
+    {key:"VIEW_TENANTS",description:"Allows viewing list of tenants"},
+    {key:"DELETE_TENANT",description:"Allows deleting tenant"},
+
+    //  Staff_mangemnet
+    {key:"CREATE_STAFF",description:"Allows creating new staff"},
+    {key:"UPDATE_STAFF",description:"Allows updating existing staff"},
+    {key:"VIEW_STAFF",description:"Allows viewing list of staff"},
+    {key:"DELETE_STAFF",description:"Allows deleting staff"},
+
+
+
     // Permission Management
     { key: "CREATE_PERMISSION", description: "Allows creating new platform permissions" },
     { key: "UPDATE_PERMISSION", description: "Allows updating existing platform permissions" },

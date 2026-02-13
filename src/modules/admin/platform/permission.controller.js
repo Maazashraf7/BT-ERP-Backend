@@ -128,6 +128,23 @@ export const listPlatformPermissions = async (req, res) => {
     }
 };
 
+export const listpermissionbyroleId = async (req, res) => {
+    try {
+        const { roleId } = req.params;
+        const permissions = await prisma.platformRolePermission.findMany({
+            where: { roleId },
+            include: {
+                permission: true
+            }
+        });
+        res.json({ success: true, permissions });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Failed to fetch platform permissions" });
+    }
+};
+
+
+
 /**
  * Assign Permissions to Platform Role
  */
@@ -172,6 +189,53 @@ export const assignPermissionsToPlatformRole = async (req, res) => {
     } catch (error) {
         logger.error("Assign Platform Permission Error:", error);
         res.status(500).json({ success: false, message: "Failed to assign permission" });
+    }
+};
+
+/**
+ * Remove Permission from Platform Role
+ */
+export const removePermissionFromPlatformRole = async (req, res) => {
+    try {
+        const { roleId, permissionId } = req.params;
+        const actorUserId = req.user.id;
+        const actorType = req.user.type;
+
+        // Check if role exists
+        const role = await prisma.platformRole.findUnique({ where: { id: roleId } });
+        if (!role) return res.status(404).json({ success: false, message: "Platform role not found" });
+
+        // Delete the permission assignment
+        await prisma.platformRolePermission.delete({
+            where: {
+                roleId_permissionId: {
+                    roleId,
+                    permissionId
+                }
+            }
+        });
+
+        // 🔥 Invalidate cache so permissions updates take effect immediately
+        clearRoleCache(roleId);
+
+        await writeAuditLog({
+            actorType: actorType === "SUPER_ADMIN" ? "SUPER_ADMIN" : "PLATFORM_MANAGEMENT",
+            [actorType === "SUPER_ADMIN" ? "superAdminId" : "platformManagementId"]: actorUserId,
+            action: "PLATFORM_PERMISSION_REMOVED",
+            entity: "PLATFORM_ROLE",
+            entityId: roleId,
+            meta: { permissionId },
+            req,
+        });
+
+        res.json({ success: true, message: "Permission removed from role successfully" });
+    } catch (error) {
+        // P2025: Record to delete does not exist
+        if (error.code === 'P2025') {
+            return res.status(404).json({ success: false, message: "Permission not assigned to this role" });
+        }
+        logger.error("Remove Platform Permission Error:", error);
+        res.status(500).json({ success: false, message: "Failed to remove permission from role" });
     }
 };
 
