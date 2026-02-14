@@ -3,12 +3,15 @@ model PlatformSidebar {
     name String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    assignToRole Plaformsidebarassign_to_role[]
 }
 
 model Plaformsidebarassign_to_role{
     id String @id @default(cuid())
     platformSidebarId String
     roleId String
+    platformSidebar PlatformSidebar @relation(fields: [platformSidebarId], references: [id])
+    platformRole PlatformRole @relation(fields: [roleId], references: [id])
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }

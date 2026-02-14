@@ -65,7 +65,14 @@ export const createSidebar = async (req, res) => {
 export const listSidebars = async (req, res) => {
     try {
         const sidebars = await prisma.platformSidebar.findMany({
-            orderBy: { createdAt: "desc" }
+            orderBy: { createdAt: "desc" },
+            include: {
+                assignToRole: {
+                    include: {
+                        platformRole: true
+                    }
+                }
+            }
         });
         res.json({ success: true, sidebars });
     } catch (error) {
