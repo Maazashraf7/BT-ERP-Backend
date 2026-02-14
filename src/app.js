@@ -20,6 +20,7 @@ import platformstaffRoutes from "./modules/admin/platform/staff.routes.js";
 import platformRoleRoutes from "./modules/admin/platform/role.routes.js";
 import platformPermissionRoutes from "./modules/admin/platform/permission.routes.js";
 import featureDomainRoutes from "./modules/admin/feature_domain/feature_domain.route.js";
+import platformSidebarRoutes from "./modules/admin/platform/sidebar.routes.js";
 import subscriptionPaymentRoutes from "./modules/admin/subscription_payment/payment.routes.js";
 
 
@@ -186,6 +187,7 @@ app.use(`${API_V1}/super-admin/features`, featureRoutes);
 app.use(`${API_V1}/super-admin/platform-roles`, platformRoleRoutes);
 app.use(`${API_V1}/super-admin/permissions`, platformPermissionRoutes); // Permissions CRUD
 app.use(`${API_V1}/super-admin/platform-staff`, platformstaffRoutes);
+app.use(`${API_V1}/super-admin/platform-sidebar`, platformSidebarRoutes);
 
 
 
@@ -216,7 +218,7 @@ app.use(`${API_V1}/super-admin/platform-permissions`, platformPermissionRoutes);
 
 app.use(`${API_V1}/subscription-payment`, subscriptionPaymentRoutes);
 app.post(`${API_V1}/auth/tenant/login`, loginTenant);
-app.post(`${API_V1}/auth/tenant/register`,createTenant );
+app.post(`${API_V1}/auth/tenant/register`, createTenant);
 app.use(`${API_V1}/tenant/:tenantName`, tenantRouter);
 
 

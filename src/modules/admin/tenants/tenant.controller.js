@@ -119,7 +119,7 @@ export const createTenant = async (req, res) => {
 
       await writeAuditLog({
         actorType: "SUPER_ADMIN",
-        superAdminId,
+        superAdminId: superAdminId || "1",
         action: "TENANT_CREATED",
         entity: "TENANT",
         entityId: tenant.id,
