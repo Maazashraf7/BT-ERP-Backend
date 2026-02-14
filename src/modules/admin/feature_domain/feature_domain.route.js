@@ -8,7 +8,8 @@ import {
     assignFeatureToDomain,
     getAssignedFeatureByDomain,
     addDomainDependency,
-    removeDomainDependency
+    removeDomainDependency,
+    unassignFeatureFromDomain
 } from "./feature_domain.controller.js";
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
 import { requirePermission } from "../../../core/middlewares/permission.middleware.js";
@@ -26,6 +27,7 @@ router.get("/:id", requirePermission("VIEW_DOMAINS"), getDomainById);
 router.put("/:id", requirePermission("UPDATE_DOMAIN"), updateDomain);
 router.delete("/:id", requirePermission("DELETE_DOMAIN"), deleteDomain);
 router.post("/assignfeature", requirePermission("ASSIGN_FEATURE"), assignFeatureToDomain);
+router.post("/unassignfeature", requirePermission("UNASSIGN_FEATURE"), unassignFeatureFromDomain);
 router.get("/assignedfeatures/:domainId", requirePermission("GET_FEATURE_BY_DOMAIN"), getAssignedFeatureByDomain);
 
 // Domain Dependency Management

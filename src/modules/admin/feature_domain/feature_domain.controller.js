@@ -373,6 +373,48 @@ export const assignFeatureToDomain = async (req, res) => {
 };
 
 
+
+export const unassignFeatureFromDomain = async (req, res) => {
+  try {
+    const { featureId, domainId } = req.body;
+
+    if (!featureId || !domainId) {
+      return res.status(400).json({
+        success: false,
+        message: "featureId and domainId are required",
+      });
+    }
+    const checkFeatureDomain = await prisma.tenanFeaturedDomain_assign_features.findFirst({
+      where: {
+        featureId,
+        domainId,
+      },
+    });
+    if (!checkFeatureDomain) {
+      return res.status(404).json({
+        success: false,
+        message: "Feature not assigned to domain",
+      });
+    }
+
+    const featureDomain = await prisma.tenanFeaturedDomain_assign_features.delete({
+      where: {
+        id: checkFeatureDomain.id,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Feature unassigned from domain successfully",
+      featureDomain,
+    });
+  } catch (error) {
+    console.error("UNASSIGN FEATURE FROM DOMAIN ERROR:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
 export const getAssignedFeatureByDomain = async (req, res) => {
   try {
     const { domainId } = req.params;

@@ -16,6 +16,10 @@ export const createSidebar = async (req, res) => {
         const actorUserId = req.user.id;
         const actorType = req.user.type; // "SUPER_ADMIN" or "PLATFORM_MANAGEMENT"
 
+        // if (actorType !== "SUPER_ADMIN" && actorType !== "PLATFORM_STAFF") {
+        //     return res.status(403).json({ success: false, message: "Only Super Admin or Platform Staff can perform this action" });
+        // }
+
         if (!name) {
             return res.status(400).json({ success: false, message: "Sidebar name is required" });
         }
