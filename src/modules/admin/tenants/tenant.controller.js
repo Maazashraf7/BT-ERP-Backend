@@ -25,7 +25,7 @@ export const createTenant = async (req, res) => {
     } = req.body;
 
 
-    const superAdminId = req.user.id;
+    const superAdminId = req?.user?.id;
 
 
     // 🔍 Efficient Case-insensitive Duplicate Check directly in DB
