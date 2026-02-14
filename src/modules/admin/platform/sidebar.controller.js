@@ -8,6 +8,11 @@ import { writeAuditLog } from "../../../platform/audit/audit.helper.js";
 export const createSidebar = async (req, res) => {
     try {
         const { name } = req.body;
+
+        if (!req.user) {
+            return res.status(401).json({ success: false, message: "User not authenticated" });
+        }
+
         const actorUserId = req.user.id;
         const actorType = req.user.type; // "SUPER_ADMIN" or "PLATFORM_MANAGEMENT"
 
@@ -41,7 +46,12 @@ export const createSidebar = async (req, res) => {
 
     } catch (error) {
         logger.error(`[createSidebar] error: ${error.message}`, error);
-        res.status(500).json({ success: false, message: "Failed to create sidebar item" });
+        res.status(500).json({
+            success: false,
+            message: "Failed to create sidebar item",
+            error: error.message,
+            stack: error.stack
+        });
     }
 };
 
