@@ -9,6 +9,7 @@ model PlatformRole {
 
   permissions      PlatformRolePermission[]
   staffs           Platform_staff[]
+  sidebarAssignments PlatformSidebarAssignToRole[]
 
   @@map("platform_role")
 }

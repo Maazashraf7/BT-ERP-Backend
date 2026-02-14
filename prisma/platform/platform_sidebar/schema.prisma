@@ -3,10 +3,10 @@ model PlatformSidebar {
     name String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
-    assignToRole Plaformsidebarassign_to_role[]
+    assignToRole PlatformSidebarAssignToRole[]
 }
 
-model Plaformsidebarassign_to_role{
+model PlatformSidebarAssignToRole{
     id String @id @default(cuid())
     platformSidebarId String
     roleId String

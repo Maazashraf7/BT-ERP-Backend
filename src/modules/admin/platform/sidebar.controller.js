@@ -116,7 +116,7 @@ export const assignSidebarToRole = async (req, res) => {
         }
 
         // Check if already assigned
-        const existingAssignment = await prisma.plaformsidebarassign_to_role.findFirst({
+        const existingAssignment = await prisma.platformSidebarAssignToRole.findFirst({
             where: {
                 roleId,
                 platformSidebarId: sidebarId
@@ -128,7 +128,7 @@ export const assignSidebarToRole = async (req, res) => {
         }
 
         // Create assignment
-        await prisma.plaformsidebarassign_to_role.create({
+        await prisma.platformSidebarAssignToRole.create({
             data: {
                 roleId,
                 platformSidebarId: sidebarId
@@ -184,7 +184,7 @@ export const unassignSidebarFromRole = async (req, res) => {
         }
 
         // Check if already assigned
-        const existingAssignment = await prisma.plaformsidebarassign_to_role.findFirst({
+        const existingAssignment = await prisma.platformSidebarAssignToRole.findFirst({
             where: {
                 roleId,
                 platformSidebarId: sidebarId
@@ -196,7 +196,7 @@ export const unassignSidebarFromRole = async (req, res) => {
         }
 
         // Create assignment
-        await prisma.plaformsidebarassign_to_role.delete({
+        await prisma.platformSidebarAssignToRole.delete({
             where: {
                 id: existingAssignment.id
             }
@@ -236,7 +236,7 @@ export const getRoleSidebars = async (req, res) => {
         }
 
         // Start with finding the assignments
-        const assignments = await prisma.plaformsidebarassign_to_role.findMany({
+        const assignments = await prisma.platformSidebarAssignToRole.findMany({
             where: { roleId },
             select: { platformSidebarId: true } // We only have the ID, no relation setup in schema shown
         });
