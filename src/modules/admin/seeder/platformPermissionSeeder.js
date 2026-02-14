@@ -11,6 +11,12 @@ const platformPermissions = [
     {key:"VIEW_TENANTS",description:"Allows viewing list of tenants"},
     {key:"DELETE_TENANT",description:"Allows deleting tenant"},
 
+    // Subscription_mangemnet
+    {key:"CREATE_SUBSCRIPTION",description:"Allows creating new subscription"},
+    {key:"UPDATE_SUBSCRIPTION",description:"Allows updating existing subscription"},
+    {key:"VIEW_SUBSCRIPTIONS",description:"Allows viewing list of subscriptions"},
+    {key:"DELETE_SUBSCRIPTION",description:"Allows deleting subscription"},
+
     //  Staff_mangemnet
     {key:"CREATE_STAFF",description:"Allows creating new staff"},
     {key:"UPDATE_STAFF",description:"Allows updating existing staff"},
@@ -18,21 +24,33 @@ const platformPermissions = [
     {key:"DELETE_STAFF",description:"Allows deleting staff"},
 
 
-
+    
     // Permission Management
     { key: "CREATE_PERMISSION", description: "Allows creating new platform permissions" },
     { key: "UPDATE_PERMISSION", description: "Allows updating existing platform permissions" },
     { key: "VIEW_PERMISSIONS", description: "Allows viewing list of platform permissions" },
     { key: "ASSIGN_PERMISSIONS", description: "Allows assigning permissions to roles" },
+    { key: "REMOVE_PERMISSION", description: "Allows removing permissions from roles" },
 
-    // Permission Domain Management
-    { key: "ASSIGN_DOMAIN", description: "Allows assigning domains to permissions" },
-    { key: "CREATE_PERMISSION_DOMAIN", description: "Allows creating new permission domains" },
-    { key: "VIEW_PERMISSION_DOMAINS", description: "Allows viewing list of permission domains" },
-    { key: "UPDATE_PERMISSION_DOMAIN", description: "Allows updating permission domains" },
-    { key: "DELETE_PERMISSION_DOMAIN", description: "Allows deleting permission domains" },
 
-    // Add other permissions here as needed...
+    // Permission Domain_mangemnet
+    {key:"ASSIGN_PERMISSION_DOMAIN",description:"Allows assigning permissions to domain"},
+    {key:"CREATE_PERMISSION_DOMAIN",description:"Allows creating new permission domain"},
+    {key:"UPDATE_PERMISSION_DOMAIN",description:"Allows updating existing permission domain"},
+    {key:"VIEW_PERMISSION_DOMAINS",description:"Allows viewing list of permission domains"},
+    {key:"DELETE_PERMISSION_DOMAIN",description:"Allows deleting permission domain"},
+
+    // Role_mangemnet
+    {key:"CREATE_ROLE",description:"Allows creating new role"},
+    {key:"UPDATE_ROLE",description:"Allows updating existing role"},
+    {key:"VIEW_ROLES",description:"Allows viewing list of roles"},
+    {key:"DELETE_ROLE",description:"Allows deleting role"},
+
+    // Audit_mangemnet
+    {key:"VIEW_AUDIT_LOGS",description:"Allows viewing list of audit logs"},
+
+
+
 ];
 
 export const seedPlatformPermissions = async () => {

@@ -28,7 +28,7 @@ router.delete("/assign", requirePermission("REMOVE_PERMISSION"), removePermissio
 router.get("/assign/:roleId", requirePermission("VIEW_PERMISSIONS"), listpermissionbyroleId);
 
 // Platform Permission Domains
-router.post("/assign-domain", requirePermission("ASSIGN_DOMAIN"), assignPermissionsToDomain);
+router.post("/assign-domain", requirePermission("ASSIGN_PERMISSION_DOMAIN"), assignPermissionsToDomain);
 router.post("/domains", requirePermission("CREATE_PERMISSION_DOMAIN"), createPlatformPermissionDomain);
 router.get("/domains", requirePermission("VIEW_PERMISSION_DOMAINS"), listPlatformPermissionDomains);
 router.put("/domains/:id", requirePermission("UPDATE_PERMISSION_DOMAIN"), updatePlatformPermissionDomain);

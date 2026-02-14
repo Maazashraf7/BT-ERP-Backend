@@ -13,7 +13,7 @@ import modulesRoutes from "./platform/modules/module.routes.js";
 import superAdminAuthRoutes from "./modules/admin/platform/superadmin.routes.js";
 import superAdminTenantRoutes from "./modules/admin/tenants/tenant.routes.js";
 import Subscription_Plan from "./modules/admin/subscription/subscription.routes.js";
-import { loginTenant } from "./modules/admin/tenants/tenant.controller.js";
+import { createTenant, loginTenant } from "./modules/admin/tenants/tenant.controller.js";
 import levelPowerRoutes from "./modules/admin/levelpower/levelpower.routes.js";
 import featureRoutes from "./modules/admin/features/features.route.js";
 import platformstaffRoutes from "./modules/admin/platform/staff.routes.js";
@@ -25,6 +25,7 @@ import subscriptionPaymentRoutes from "./modules/admin/subscription_payment/paym
 
 // 🏫 Tenant Admin
 import tenantRouter from "./modules/admin/tenantaction/tenant.routes.js";
+import { registerTenantStaff } from "./modules/admin/tenants/tenants_staff/tenantstaff.controller.js";
 
 
 
@@ -215,6 +216,7 @@ app.use(`${API_V1}/super-admin/platform-permissions`, platformPermissionRoutes);
 
 app.use(`${API_V1}/subscription-payment`, subscriptionPaymentRoutes);
 app.post(`${API_V1}/auth/tenant/login`, loginTenant);
+app.post(`${API_V1}/auth/tenant/register`,createTenant );
 app.use(`${API_V1}/tenant/:tenantName`, tenantRouter);
 
 

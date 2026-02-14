@@ -1,13 +1,14 @@
 import express from "express";
 import {
-	getMyAuditLogs,
-//   getTenantAuditLogs,
-  
+  getMyAuditLogs,
+  //   getTenantAuditLogs,
+
 } from "./audit.controller.js";
 
 // import superAdminAuth from "../../middlewares/superAdmin.middleware.js";
 // import tenantAuth from "../../middlewares/auth.middleware.js";
 import { authMiddleware } from "../../core/middlewares/auth.middleware.js";
+import { requirePermission } from "../../core/middlewares/permission.middleware.js";
 const router = express.Router();
 
 
@@ -22,6 +23,7 @@ const router = express.Router();
 router.get(
   "/me/audit-logs",
   authMiddleware,
+  requirePermission("VIEW_AUDIT_LOGS"),
   getMyAuditLogs
 );
 

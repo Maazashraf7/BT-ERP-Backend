@@ -1,9 +1,14 @@
 model PlatformSidebar {
     id String @id @default(cuid())
     name String
-    icon String
-    url String
-    order Int
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Plaformsidebarassign_to_role{
+    id String @id @default(cuid())
+    platformSidebarId String
+    roleId String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
