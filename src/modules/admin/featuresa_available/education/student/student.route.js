@@ -8,11 +8,13 @@ import {
 } from "./student.controller.js";
 import { checkDomainInPlan } from "../../../../../core/middlewares/fetures.middleware.js";
 import { requirePermission } from "../../../../../core/middlewares/permission.middleware.js";
+import { checkSubscription } from "../../../../../core/middlewares/subscription.middleware.js";
 
 const router = Router();
 
 // Routes are already protected by tenantRouter middleware (authMiddleware and checkSubscription)
 router.use(checkDomainInPlan("ACADEMIC"))
+router.use(checkSubscription)
 
 router.post("/create", requirePermission("CREATE_STUDENT"), createStudent);
 router.get("/list", requirePermission("READ_STUDENT"), listStudents);
