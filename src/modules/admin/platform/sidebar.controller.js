@@ -75,17 +75,21 @@ export const listSidebars = async (req, res) => {
 };
 
 /**
- * Assign Sidebar Items to a Platform Role
- * Body: { roleId, sidebarIds: [] }
+ * Assign Sidebar Item to a Platform Role
+ * Body: { roleId, sidebarId }
  */
 export const assignSidebarToRole = async (req, res) => {
     try {
-        const { roleId, sidebarIds } = req.body;
+        const { roleId, sidebarId } = req.body;
         const actorUserId = req.user.id;
         const actorType = req.user.type;
 
-        if (!roleId || !Array.isArray(sidebarIds)) {
-            return res.status(400).json({ success: false, message: "roleId and sidebarIds (array) are required" });
+        if (actorType !== "SUPER_ADMIN" && actorType !== "PLATFORM_STAFF") {
+            return res.status(403).json({ success: false, message: "Only Super Admin or Platform Staff can perform this action" });
+        }
+
+        if (!roleId || !sidebarId) {
+            return res.status(400).json({ success: false, message: "roleId and sidebarId are required" });
         }
 
         // Validate Role
@@ -96,31 +100,31 @@ export const assignSidebarToRole = async (req, res) => {
             return res.status(404).json({ success: false, message: "Role not found" });
         }
 
-        // Validate Sidebars (Optional but good)
-        if (sidebarIds.length > 0) {
-            const count = await prisma.platformSidebar.count({
-                where: { id: { in: sidebarIds } }
-            });
-            if (count !== sidebarIds.length) {
-                return res.status(400).json({ success: false, message: "One or more sidebar IDs are invalid" });
-            }
+        // Validate Sidebar
+        const sidebar = await prisma.platformSidebar.findUnique({
+            where: { id: sidebarId }
+        });
+        if (!sidebar) {
+            return res.status(404).json({ success: false, message: "Sidebar item not found" });
         }
 
-        // Transaction to replace assignments
-        await prisma.$transaction(async (tx) => {
-            // Delete existing assignments for this role
-            await tx.plaformsidebarassign_to_role.deleteMany({
-                where: { roleId }
-            });
+        // Check if already assigned
+        const existingAssignment = await prisma.plaformsidebarassign_to_role.findFirst({
+            where: {
+                roleId,
+                platformSidebarId: sidebarId
+            }
+        });
 
-            // Create new assignments
-            if (sidebarIds.length > 0) {
-                await tx.plaformsidebarassign_to_role.createMany({
-                    data: sidebarIds.map((sid) => ({
-                        roleId,
-                        platformSidebarId: sid
-                    }))
-                });
+        if (existingAssignment) {
+            return res.status(400).json({ success: false, message: "Sidebar item already assigned to this role" });
+        }
+
+        // Create assignment
+        await prisma.plaformsidebarassign_to_role.create({
+            data: {
+                roleId,
+                platformSidebarId: sidebarId
             }
         });
 
@@ -130,21 +134,89 @@ export const assignSidebarToRole = async (req, res) => {
             action: "PLATFORM_SIDEBAR_ASSIGNED",
             entity: "PLATFORM_ROLE",
             entityId: roleId,
-            meta: { sidebarIds },
+            meta: { sidebarId },
             req
         });
 
-        res.json({ success: true, message: "Sidebar items assigned successfully" });
+        res.json({ success: true, message: "Sidebar item assigned successfully" });
 
     } catch (error) {
         logger.error(`[assignSidebarToRole] error: ${error.message}`, error);
-        res.status(500).json({ success: false, message: "Failed to assign sidebar items" });
+        res.status(500).json({ success: false, message: "Failed to assign sidebar item" });
     }
 };
 
+export const unassignSidebarFromRole = async (req, res) => {
+    try {
+        const { roleId, sidebarId } = req.body;
+        const actorUserId = req.user.id;
+        const actorType = req.user.type;
+
+        if (actorType !== "SUPER_ADMIN" && actorType !== "PLATFORM_STAFF") {
+            return res.status(403).json({ success: false, message: "Only Super Admin or Platform Staff can perform this action" });
+        }
+
+        if (!roleId || !sidebarId) {
+            return res.status(400).json({ success: false, message: "roleId and sidebarId are required" });
+        }
+
+        // Validate Role
+        const role = await prisma.platformRole.findUnique({
+            where: { id: roleId }
+        });
+        if (!role) {
+            return res.status(404).json({ success: false, message: "Role not found" });
+        }
+
+        // Validate Sidebar
+        const sidebar = await prisma.platformSidebar.findUnique({
+            where: { id: sidebarId }
+        });
+        if (!sidebar) {
+            return res.status(404).json({ success: false, message: "Sidebar item not found" });
+        }
+
+        // Check if already assigned
+        const existingAssignment = await prisma.plaformsidebarassign_to_role.findFirst({
+            where: {
+                roleId,
+                platformSidebarId: sidebarId
+            }
+        });
+
+        if (!existingAssignment) {
+            return res.status(400).json({ success: false, message: "Sidebar item not assigned to this role" });
+        }
+
+        // Create assignment
+        await prisma.plaformsidebarassign_to_role.delete({
+            where: {
+                id: existingAssignment.id
+            }
+        });
+
+        await writeAuditLog({
+            actorType: actorType === "SUPER_ADMIN" ? "SUPER_ADMIN" : "PLATFORM_MANAGEMENT",
+            [actorType === "SUPER_ADMIN" ? "superAdminId" : "platformManagementId"]: actorUserId,
+            action: "PLATFORM_SIDEBAR_UNASSIGNED",
+            entity: "PLATFORM_ROLE",
+            entityId: roleId,
+            meta: { sidebarId },
+            req
+        });
+
+        res.json({ success: true, message: "Sidebar item unassigned successfully" });
+
+    } catch (error) {
+        logger.error(`[unassignSidebarFromRole] error: ${error.message}`, error);
+        res.status(500).json({ success: false, message: "Failed to unassign sidebar item" });
+    }
+};
+
+
 /**
  * Get Sidebar Items Assigned to a Role
- */
+ **/
 export const getRoleSidebars = async (req, res) => {
     try {
         const { roleId } = req.params;

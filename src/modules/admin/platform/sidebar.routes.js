@@ -3,7 +3,8 @@ import {
     createSidebar,
     listSidebars,
     assignSidebarToRole,
-    getRoleSidebars
+    getRoleSidebars,
+    unassignSidebarFromRole
 } from "./sidebar.controller.js";
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
 import { requirePermission } from "../../../core/middlewares/permission.middleware.js";
@@ -18,6 +19,7 @@ router.get("/", requirePermission("VIEW_PLATFORM_SIDEBAR"), listSidebars);
 
 // Assignment
 router.post("/assign", requirePermission("ASSIGN_PLATFORM_SIDEBAR"), assignSidebarToRole);
+router.delete("/assign", requirePermission("UNASSIGN_PLATFORM_SIDEBAR"), unassignSidebarFromRole);
 router.get("/role/:roleId", requirePermission("VIEW_PLATFORM_SIDEBAR"), getRoleSidebars);
 
 export default router;
