@@ -6,11 +6,11 @@ import prisma from "../config/db.js";
  */
 export const checkSubscription = async (req, res, next) => {
   try {
-    const { tenantId , role , type } = req.user;
-     
+    const { tenantId, role, type } = req.user;
 
 
-    if (role === "SUPER_ADMIN" || type === "SUPER_ADMIN" ) {
+
+    if (role === "SUPER_ADMIN" || type === "SUPER_ADMIN" || type === "PLATFORM_STAFF") {
       return next();
     }
 
