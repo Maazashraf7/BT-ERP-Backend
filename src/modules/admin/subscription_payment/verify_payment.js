@@ -60,17 +60,23 @@ export const createSubscriptionOrder = async (req, res) => {
  */
 export const createSubscriptionQr = async (req, res) => {
     try {
-        const { planId, tenantId } = req.body;
-        console.log("DEBUG: createSubscriptionQr for planId:", planId);
+        const { planId } = req.body;
+        // Securely get tenantId from authenticated user
+        const tenantId = req.user?.tenantId || req.user?.id;
 
+        console.log("DEBUG: createSubscriptionQr for planId:", planId, "tenantId:", tenantId);
 
         if (!tenantId) {
-            return res.status(400).json({ success: false, message: "tenantId is required" });
+            return res.status(400).json({ success: false, message: "Tenant context required" });
         }
 
         const checkexistingSubscription = await prisma.tenant.findUnique({ where: { id: tenantId } });
-  
-        if (checkexistingSubscription.subscription_planId) {
+
+        if (!checkexistingSubscription) {
+            return res.status(404).json({ success: false, message: "Tenant not found" });
+        }
+
+        if (checkexistingSubscription.subscription_planId && checkexistingSubscription.isActive) {
             return res.status(400).json({ success: false, message: "Your subscription already exists" });
         }
 
@@ -88,11 +94,11 @@ export const createSubscriptionQr = async (req, res) => {
         console.log("DEBUG: Sending request to Razorpay for QR...");
         const qrCode = await razorpay.qrCode.create({
             type: "upi_qr",
-            name: `Plan_${plan.name.substring(0, 20)}`, // Limit name length
+            name: `Plan_${(plan.name || "").substring(0, 20)}`, // Limit name length
             usage: "single_payment",
             fixed_amount: true,
             payment_amount: Math.round(plan.price * 100), // in paise
-            description: `Pay for ${plan.name.substring(0, 20)}`,
+            description: `Pay for ${(plan.name || "").substring(0, 20)}`,
         });
         console.log("DEBUG: Razorpay QR created successfully ID:", qrCode.id);
 
@@ -120,7 +126,7 @@ export const checkPaymentStatus = async (req, res) => {
     try {
         const { qrId } = req.params;
         const { planId } = req.query; // We need planId to activate the plan
-        const tenantId = req.user.tenantId || req.user.id;
+        const tenantId = req.user?.tenantId || req.user?.id;
 
         if (!qrId || !planId) {
             return res.status(400).json({ success: false, message: "qrId and planId are required" });
@@ -129,11 +135,14 @@ export const checkPaymentStatus = async (req, res) => {
         // Fetch payments for this QR code
         const payments = await razorpay.qrCode.fetchAllPayments(qrId);
 
+        // Safely access items
+        const items = payments?.items || [];
+
         // Check if any payment is captured/authorized
-        const successfulPayment = payments.items.find(p => p.status === 'captured' || p.status === 'authorized');
+        const successfulPayment = items.find(p => p.status === 'captured' || p.status === 'authorized');
 
         if (successfulPayment) {
-            // Activate subscription (reuse logic from verifyPayment but simplified)
+            // Activate subscription
             const plan = await prisma.subscription_Plan.findUnique({ where: { id: planId } });
             if (!plan) return res.status(404).json({ success: false, message: "Plan not found" });
 
@@ -169,7 +178,8 @@ export const checkPaymentStatus = async (req, res) => {
             return res.json({
                 success: true,
                 message: "Payment successful and plan activated",
-                tenant: { id: result.id, plan: plan.name, expiry: result.subscription_plan_end_date }
+                tenant: { id: result.id, plan: plan.name, expiry: result.subscription_plan_end_date },
+                paymentId: successfulPayment.id
             });
         }
 
@@ -177,7 +187,7 @@ export const checkPaymentStatus = async (req, res) => {
 
     } catch (error) {
         console.error("CHECK STATUS ERROR:", error);
-        res.status(500).json({ success: false, message: "Error checking payment status" });
+        res.status(500).json({ success: false, message: "Error checking payment status", error: error.message });
     }
 };
 
