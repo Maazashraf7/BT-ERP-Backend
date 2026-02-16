@@ -16,6 +16,9 @@ const platformPermissions = [
     {key:"UPDATE_SUBSCRIPTION",description:"Allows updating existing subscription"},
     {key:"VIEW_SUBSCRIPTIONS",description:"Allows viewing list of subscriptions"},
     {key:"DELETE_SUBSCRIPTION",description:"Allows deleting subscription"},
+    {key:"ASSIGN_SUBSCRIPTION",description:"Allows assigning subscription to tenant"},
+    {key:"UNASSIGN_SUBSCRIPTION",description:"Allows unassigning subscription from tenant"},
+    {key:"VIEW_SUBSCRIPTION_HISTORY",description:"Allows viewing list of subscription history"},
 
     //  Staff_mangemnet
     {key:"CREATE_STAFF",description:"Allows creating new staff"},
@@ -45,6 +48,18 @@ const platformPermissions = [
     {key:"UPDATE_ROLE",description:"Allows updating existing role"},
     {key:"VIEW_ROLES",description:"Allows viewing list of roles"},
     {key:"DELETE_ROLE",description:"Allows deleting role"},
+
+
+
+    //  Sidebar_mangemnet
+    {key:"CREATE_PLATFORM_SIDEBAR",description:"Allows creating new platform sidebar"},
+    {key:"ASSIGN_PLATFORM_SIDEBAR",description:"Allows assigning platform sidebar to tenant"},
+    {key:"VIEW_PLATFORM_SIDEBARS",description:"Allows viewing list of platform sidebars"},
+    {key:"UNASSIGN_PLATFORM_SIDEBAR",description:"Allows unassigning platform sidebar from tenant"},
+
+
+
+
 
     // Audit_mangemnet
     {key:"VIEW_AUDIT_LOGS",description:"Allows viewing list of audit logs"},

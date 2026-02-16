@@ -12,8 +12,7 @@ app.listen(PORT, async () => {
   try {
 
     // ... inside the startup function
-    // await seedPlatformPermissions();
-    // await seedAdminData();
+    await seedPlatformPermissions();
   } catch (error) {
     console.error("Failed to run admin seeder:", error);
   }

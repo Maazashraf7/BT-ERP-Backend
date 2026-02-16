@@ -262,12 +262,21 @@ export const createPlatformPermissionDomain = async (req, res) => {
         const { name, description } = req.body;
         if (!name) return res.status(400).json({ success: false, message: "Name required" });
 
+        const existing = await prisma.platformPermissionDomain.findUnique({
+            where: { name }
+        });
+
+        if (existing) {
+            return res.status(409).json({ success: false, message: "Permission Domain with this name already exists" });
+        }
+
         const domain = await prisma.platformPermissionDomain.create({
             data: { name, description }
         });
         res.status(201).json({ success: true, domain });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Failed to create domain" });
+        logger.error("Create Domain Error:", error);
+        res.status(500).json({ success: false, message: "Failed to create domain", error: error.message });
     }
 };
 
