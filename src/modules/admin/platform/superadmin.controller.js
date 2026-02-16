@@ -118,8 +118,8 @@ export const loginSuperAdmin = async (req, res) => {
         // Set Cookie
         res.cookie("token", token, {
             httpOnly: true,
-            secure: false,        // HTTP allowed
-            sameSite: "lax",      // ✅ REQUIRED
+            secure: true,        // HTTP allowed
+            sameSite: "none",      // ✅ REQUIRED
             maxAge: 24 * 60 * 60 * 1000,
             path: "/",            // good practice
         });
