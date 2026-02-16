@@ -15,3 +15,5 @@ export const setCachedPermissions = (roleId, permissions) => {
 export const clearRoleCache = (roleId) => {
   permissionCache.delete(roleId);
 };
+
+console.log("permissionCache", permissionCache);

@@ -25,7 +25,7 @@ export const requirePermission = (permissionKey) => {
         // 3️⃣ Load from DB
         let permissionKeys = [];
 
-        if (type === "PLATFORM_MANAGEMENT") {
+        if (type === "PLATFORM_STAFF") {
           const rolePermissions = await prisma.platformRolePermission.findMany({
             where: { roleId },
             include: { permission: true },
@@ -51,12 +51,12 @@ export const requirePermission = (permissionKey) => {
 
       // 5️⃣ Permission Denied
       let permName = permissionKey;
-      if (type === "PLATFORM_MANAGEMENT") {
-        const def = await prisma.platformPermission.findUnique({ where: { key: permissionKey }, select: { name: true } });
-        if (def) permName = def.name;
+      if (type === "PLATFORM_STAFF") {
+        const def = await prisma.platformPermission.findUnique({ where: { key: permissionKey }, select: { description: true } });
+        if (def) permName = def.description || permissionKey;
       } else {
-        const def = await prisma.tenantPermission.findUnique({ where: { key: permissionKey }, select: { name: true } });
-        if (def) permName = def.name;
+        const def = await prisma.tenantPermission.findUnique({ where: { key: permissionKey }, select: { description: true } });
+        if (def) permName = def.description || permissionKey;
       }
 
       return res.status(403).json({
