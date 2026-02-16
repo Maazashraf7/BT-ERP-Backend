@@ -224,6 +224,7 @@ export const loginPlatformStaff = async (req, res) => {
                 userId: staff.id,
                 email: staff.email,
                 role: staff.role?.name || "STAFF",
+                roleId: staff.roleId,
                 type: "PLATFORM_STAFF",
                 power: staff.power
             },

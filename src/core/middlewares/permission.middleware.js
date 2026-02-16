@@ -15,7 +15,7 @@ export const requirePermission = (permissionKey) => {
       }
 
       if (!roleId) {
-        return res.status(403).json({ success: false, message: "No role assigned" });
+        return res.status(403).json({ success: false, message: "Role not found" });
       }
 
       // 2️⃣ Try cache first
