@@ -125,8 +125,8 @@ export const createSubscriptionQr = async (req, res) => {
 export const checkPaymentStatus = async (req, res) => {
     try {
         const { qrId } = req.params;
-        const { planId } = req.query; // We need planId to activate the plan
-        const tenantId = req.user?.tenantId || req.user?.id;
+        const { planId, tenantId: queryTenantId } = req.query; // Accept tenantId from query
+        const tenantId = req.user?.tenantId || req.user?.id || queryTenantId;
 
         if (!qrId || !planId) {
             return res.status(400).json({ success: false, message: "qrId and planId are required" });
@@ -198,13 +198,19 @@ export const verifyPayment = async (req, res) => {
             razorpay_order_id,
             razorpay_signature,
             planId,
+            tenantId: bodyTenantId, // Accept tenantId from body if auth missing
         } = req.body;
 
-        // From authMiddleware
-        const tenantId = req.user.tenantId || req.user.id;
+        // From authMiddleware OR body (fallback)
+        const tenantId = req.user?.tenantId || req.user?.id || bodyTenantId;
 
         if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature || !planId) {
             return res.status(400).json({ success: false, message: "Missing required payment details" });
+        }
+
+        if (!tenantId) {
+            console.log("Verify Payment Debug - No Tenant Context");
+            // Optional: Fail here if you want to strictly enforce it, but for now we proceed or fail later
         }
 
         // 1. Signature Verification

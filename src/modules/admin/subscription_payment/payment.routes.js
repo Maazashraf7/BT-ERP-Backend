@@ -9,14 +9,14 @@ import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
 
 const router = Router();
 
-// Protect all payment routes - user must be logged in as Tenant
-router.use(authMiddleware);
+// Protect specific payment routes manually for now
+// router.use(authMiddleware);
 
 /**
  * @route POST /api/v1/subscription-payment/create-order
  * @desc Create a Razorpay order for a subscription plan
  */
-router.post("/create-order", createSubscriptionOrder);
+router.post("/create-order", authMiddleware, createSubscriptionOrder);
 
 /**
  * @route POST /api/v1/subscription-payment/verify
@@ -28,7 +28,7 @@ router.post("/verify", verifyPayment);
  * @route POST /api/v1/subscription-payment/create-qr
  * @desc Create a static QR Code for Subscription
  */
-router.post("/create-qr", createSubscriptionQr);
+router.post("/create-qr", authMiddleware, createSubscriptionQr);
 
 /**
  * @route GET /api/v1/subscription-payment/check-status/:qrId

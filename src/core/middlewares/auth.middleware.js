@@ -8,9 +8,12 @@ export const authMiddleware = async (req, res, next) => {
 
   if (!token) {
     const authHeader = req.headers.authorization;
+    console.log("Auth Debug - Auth Header:", authHeader);
     if (authHeader && authHeader.startsWith("Bearer ")) {
       token = authHeader.split(" ")[1];
-      console.log("Auth Debug - Token from Header ffffffffff:", token ? "FOUND" : "MISSING");
+      console.log("Auth Debug - Token from Header:", token ? "FOUND" : "MISSING");
+    } else {
+      console.log("Auth Debug - No valid Bearer token found in Header");
     }
   }
 
