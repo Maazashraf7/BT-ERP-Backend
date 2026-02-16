@@ -66,6 +66,30 @@ const platformPermissions = [
 
 
 
+//    manage Feature 
+    {key:"CREATE_FEATURE",description:"Allows creating new feature"},
+    {key:"UPDATE_FEATURE",description:"Allows updating existing feature"},
+    {key:"VIEW_FEATURES",description:"Allows viewing list of features"},
+    {key:"DELETE_FEATURE",description:"Allows deleting feature"},
+    {key:"TOGGLE_FEATURE_STATUS",description:"Allows toggling feature status"},
+
+
+    // Feature Domain_mangemnet
+    {key:"CREATE_FEATURE_DOMAIN",description:"Allows creating new feature domain"},
+    {key:"UPDATE_FEATURE_DOMAIN",description:"Allows updating existing feature domain"},
+    {key:"VIEW_FEATURE_DOMAINS",description:"Allows viewing list of feature domains"},
+    {key:"DELETE_FEATURE_DOMAIN",description:"Allows deleting feature domain"},
+    {key:"ASSIGN_FEATURE_DOMAIN",description:"Allows assigning feature to domain"},
+    {key:"UNASSIGN_FEATURE_DOMAIN",description:"Allows unassigning feature from domain"},
+    {key:"GET_FEATURE_BY_DOMAIN",description:"Allows getting feature by domain"},
+
+ 
+    // manage SUbscription and Domain Feaure 
+    {key:"ASSIGN_SUBSCRIPTION_TO_DOMAIN",description:"Allows assigning subscription to domain"},
+    {key:"REMOVE_SUBSCRIPTION_FROM_DOMAIN",description:"Allows removing subscription from domain"},
+    {key:"VIEW_SUBSCRIPTION_DOMAINS",description:"Allows viewing list of subscription domains"},
+
+
 ];
 
 export const seedPlatformPermissions = async () => {

@@ -24,9 +24,13 @@ router.get("/", listSubscriptions);
 router.use(authMiddleware);
 router.use(checkSubscription);
 
-router.get("/all-domains", getAllDomainsInSubscription);
-router.post("/assign-domain", assignDomainToSubscription);
-router.post("/remove-domain", removeDomainFromSubscription);
+router.get("/all-domains", requirePermission("VIEW_SUBSCRIPTION_DOMAINS"), getAllDomainsInSubscription);
+router.post("/assign-domain", requirePermission("ASSIGN_SUBSCRIPTION_TO_DOMAIN"), assignDomainToSubscription);
+router.post("/remove-domain", requirePermission("REMOVE_SUBSCRIPTION_FROM_DOMAIN"), removeDomainFromSubscription);
+
+
+
+
 router.post("/", requirePermission("CREATE_SUBSCRIPTION_PLAN"), createSubscription);
 router.post("/assign/:tenantId", requirePermission("ASSIGN_SUBSCRIPTION_PLAN"), assignSubscriptionToTenant);
 router.get("/:subscriptionId", requirePermission("VIEW_SUBSCRIPTION_PLAN"), getSubscriptionDetails);
