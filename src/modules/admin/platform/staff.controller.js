@@ -17,7 +17,7 @@ export const registerPlatformStaff = async (req, res) => {
         if (!email || !password) {
             return res.status(400).json({ success: false, message: "Email and password are required" });
         }
-        const role = await prisma.platform_role.findUnique({ where: { id: roleId } });
+        const role = await prisma.platformRole.findUnique({ where: { id: roleId } });
         if (!role) {
             return res.status(404).json({ success: false, message: "Role not found" });
         }
