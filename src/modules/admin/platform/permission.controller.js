@@ -148,6 +148,7 @@ export const listpermissionbyroleId = async (req, res) => {
 /**
  * Assign Permissions to Platform Role
  */
+
 export const assignPermissionsToPlatformRole = async (req, res) => {
     try {
         const { permissionId, roleId } = req.body; // Expect single permissionId

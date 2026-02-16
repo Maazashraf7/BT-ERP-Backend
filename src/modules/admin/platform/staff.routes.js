@@ -17,10 +17,10 @@ router.post("/login", loginPlatformStaff);
 // Protected routes
 router.use(authMiddleware);
 
-router.post("/register", requirePermission("STAFF_CREATE"), registerPlatformStaff);
-router.get("/", requirePermission("STAFF_READ"), listPlatformStaff);
-router.patch("/:id", requirePermission("STAFF_UPDATE"), updatePlatformStaff);
-router.delete("/:id", requirePermission("STAFF_DELETE"), deletePlatformStaff);
+router.post("/register", requirePermission("CREATE_STAFF"), registerPlatformStaff);
+router.get("/", requirePermission("VIEW_STAFF"), listPlatformStaff);
+router.patch("/:id", requirePermission("UPDATE_STAFF"), updatePlatformStaff);
+router.delete("/:id", requirePermission("DELETE_STAFF"), deletePlatformStaff);
 
 
 export default router;
