@@ -20,6 +20,6 @@ router.get("/", requirePermission("VIEW_PLATFORM_SIDEBAR"), listSidebars);
 // Assignment
 router.post("/assign", requirePermission("ASSIGN_PLATFORM_SIDEBAR"), assignSidebarToRole);
 router.delete("/assign", requirePermission("UNASSIGN_PLATFORM_SIDEBAR"), unassignSidebarFromRole);
-router.get("/:roleId", requirePermission("VIEW_PLATFORM_SIDEBAR"), getRoleSidebars);
+router.get("/:roleId", getRoleSidebars);
 
 export default router;
