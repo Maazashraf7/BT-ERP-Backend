@@ -1,4 +1,4 @@
-model Platform_staff{
+model PlatformStaff{
   id               String         @id @default(uuid())
   email            String         @unique
   password         String

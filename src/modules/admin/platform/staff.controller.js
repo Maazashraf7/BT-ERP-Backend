@@ -30,14 +30,14 @@ export const registerPlatformStaff = async (req, res) => {
             });
         }
 
-        const existing = await prisma.platform_staff.findUnique({ where: { email } });
+        const existing = await prisma.platformStaff.findUnique({ where: { email } });
         if (existing) {
             return res.status(409).json({ success: false, message: "Email already exists" });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const staff = await prisma.platform_staff.create({
+        const staff = await prisma.platformStaff.create({
             data: {
                 email,
                 password: hashedPassword,
@@ -82,7 +82,7 @@ export const registerPlatformStaff = async (req, res) => {
  */
 export const listPlatformStaff = async (req, res) => {
     try {
-        const staff = await prisma.platform_staff.findMany({
+        const staff = await prisma.platformStaff.findMany({
             include: {
                 role: {
                     select: { id: true, name: true, power: true }
@@ -111,7 +111,7 @@ export const updatePlatformStaff = async (req, res) => {
         const actorUserId = req.user.id;
         const actorType = req.user.type;
 
-        const staff = await prisma.platform_staff.findUnique({
+        const staff = await prisma.platformStaff.findUnique({
             where: { id }
         });
 
@@ -128,7 +128,7 @@ export const updatePlatformStaff = async (req, res) => {
         if (roleId !== undefined) updateData.roleId = roleId;
         if (power !== undefined) updateData.power = parseInt(power);
 
-        const updatedStaff = await prisma.platform_staff.update({
+        const updatedStaff = await prisma.platformStaff.update({
             where: { id },
             data: updateData,
             include: { role: true }
@@ -161,7 +161,7 @@ export const deletePlatformStaff = async (req, res) => {
         const actorUserId = req.user.id;
         const actorType = req.user.type;
 
-        const staff = await prisma.platform_staff.findUnique({
+        const staff = await prisma.platformStaff.findUnique({
             where: { id }
         });
 
@@ -169,7 +169,7 @@ export const deletePlatformStaff = async (req, res) => {
             return res.status(404).json({ success: false, message: "Platform management staff not found" });
         }
 
-        await prisma.platform_staff.delete({
+        await prisma.platformStaff.delete({
             where: { id }
         });
 
@@ -201,7 +201,7 @@ export const loginPlatformStaff = async (req, res) => {
             return res.status(400).json({ success: false, message: "Email and password are required" });
         }
 
-        const staff = await prisma.platform_staff.findUnique({
+        const staff = await prisma.platformStaff.findUnique({
             where: { email },
             include: { role: true }
         });

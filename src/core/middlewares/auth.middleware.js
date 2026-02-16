@@ -43,7 +43,7 @@ export const authMiddleware = async (req, res, next) => {
     }
     else if (decoded.type === "PLATFORM_STAFF") {
       // ✅ Handle Global Management Staff
-      const staff = await prisma.platform_staff.findUnique({
+      const staff = await prisma.platformStaff.findUnique({
         where: { id: decoded.userId },
       });
 

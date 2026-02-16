@@ -8,7 +8,7 @@ model PlatformRole {
   updatedAt        DateTime                 @updatedAt
 
   permissions      PlatformRolePermission[]
-  staffs           Platform_staff[]
+  staffs           PlatformStaff[]
   sidebarAssignments PlatformSidebarAssignToRole[]
 
   @@map("platform_role")
