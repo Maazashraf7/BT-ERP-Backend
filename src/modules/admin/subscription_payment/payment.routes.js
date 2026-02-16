@@ -22,7 +22,7 @@ router.post("/create-order", authMiddleware, createSubscriptionOrder);
  * @route POST /api/v1/subscription-payment/verify
  * @desc Verify Razorpay payment signature and activate plan
  */
-router.post("/verify", verifyPayment);
+router.post("/verify", authMiddleware, verifyPayment);
 
 /**
  * @route POST /api/v1/subscription-payment/create-qr
@@ -34,6 +34,6 @@ router.post("/create-qr", authMiddleware, createSubscriptionQr);
  * @route GET /api/v1/subscription-payment/check-status/:qrId
  * @desc Check QR payment status (Polling)
  */
-router.get("/check-status/:qrId", checkPaymentStatus);
+router.get("/check-status/:qrId", authMiddleware, checkPaymentStatus);
 
 export default router;
