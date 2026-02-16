@@ -248,7 +248,9 @@ export const loginPlatformStaff = async (req, res) => {
                 email: staff.email,
                 name: staff.name,
                 role: staff.role,
-                power: staff.power
+                power: staff.power,
+                roleId: staff.roleId,
+                type: "PLATFORM_STAFF"
             }
         });
 
