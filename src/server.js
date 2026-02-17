@@ -1,7 +1,7 @@
 import "dotenv/config";
 import app from "./app.js";
 import seedAdminData from "./modules/admin/seeder/adminSeeder.js";
-import { seedPlatformPermissions } from "./modules/admin/seeder/platformPermissionSeeder.js";
+// import { seedPlatformPermissions } from "./modules/admin/seeder/platformPermissionSeeder.js";
 
 const PORT = process.env.PORT || 5000;
 
@@ -12,7 +12,7 @@ app.listen(PORT, async () => {
   try {
 
     // ... inside the startup function
-    await seedPlatformPermissions();
+    // await seedPlatformPermissions();
   } catch (error) {
     console.error("Failed to run admin seeder:", error);
   }

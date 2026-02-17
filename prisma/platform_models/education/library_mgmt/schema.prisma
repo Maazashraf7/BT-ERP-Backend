@@ -1,0 +1,37 @@
+model Library {
+  id               String         @id @default(uuid())
+  name             String
+  description      String?
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  tenantId         String
+  tenant           Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  books            Book[]
+
+  @@map("libraries")
+  @@unique([tenantId, name])
+}
+
+model Book {
+  id               String         @id @default(uuid())
+  title            String
+  author           String?
+  isbn             String?
+  category         String?
+  quantity         Int            @default(0)
+  description      String?
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  libraryId        String
+  library          Library        @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+
+  tenantId         String
+  tenant           Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("books")
+}
