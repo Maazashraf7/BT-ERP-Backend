@@ -20,7 +20,7 @@ import { checkDomainInPlan } from "../../../../../core/middlewares/fetures.middl
 const router = Router();
 
 // Routes are already protected by tenantRouter middleware (authMiddleware and checkSubscription)
-router.use(checkDomainInPlan("ACADEMIC"));
+router.use(checkDomainInPlan("LIBRARY"));
 
 // 🏛️ Library Management (CRUD)
 router.post("/", requirePermission("CREATE_LIBRARY"), createLibrary);

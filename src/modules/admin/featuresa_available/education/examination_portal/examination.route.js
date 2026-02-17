@@ -14,7 +14,7 @@ import { checkDomainInPlan } from "../../../../../core/middlewares/fetures.middl
 const router = Router();
 
 // 💡 Routes are already protected by tenantRouter middleware (authMiddleware and checkSubscription)
-router.use(checkDomainInPlan("ACADEMIC"));
+router.use(checkDomainInPlan("EXAM"));
 
 // Examination CRUD
 router.post("/", requirePermission("CREATE_EXAM"), createExamination);
