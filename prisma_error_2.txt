@@ -1,0 +1,19 @@
+npm warn cli npm v11.7.0 does not support Node.js v18.12.0. This version of npm supports the following node versions: `^20.17.0 || >=22.9.0`. You can find the latest version at https://nodejs.org/.
+Environment variables loaded from .env
+Prisma schema loaded from prisma
+
+Error: Prisma schema validation - (validate wasm)
+Error code: P1012
+error: Error validating field `tenant` in model `Library`: The relation field `tenant` on model `Library` is missing an opposite relation field on the model `Tenant`. Either run `prisma format` or add it manually.
+  -->  prisma\platform_models\education\library_mgmt\schema.prisma:14
+   | 
+13 |   tenantId         String
+14 |   tenant           Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+15 | 
+   | 
+
+Validation Error Count: 1
+[Context: validate]
+
+Prisma CLI Version : 5.22.0

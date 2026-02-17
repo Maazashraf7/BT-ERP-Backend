@@ -15,6 +15,7 @@ import featureRoutes from "../features/features.route.js";
 import studentRoutes from "../featuresa_available/education/student/student.route.js";
 import teacherRoutes from "../featuresa_available/education/teachers/teachers.route.js";
 import examinationRoutes from "../featuresa_available/education/examination_portal/examination.route.js";
+import libraryRoutes from "../featuresa_available/education/library_managements/library.route.js";
 
 // Middleware
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
@@ -26,8 +27,7 @@ router.use("/management-staff", staffRoutes);
 // Middleware to ensure user login for these routes
 // (We apply it here so all sub-routes are protected and have req.user)
 router.use(authMiddleware);
-router.use("/", tenantRoutes);
-
+// router.use("/", tenantRoutes); // Removed to avoid conflict with top-level tenant routes
 router.use(checkSubscription)
 
 
@@ -37,7 +37,8 @@ router.use("/features", featureRoutes);
 router.use("/users", userRoutes);
 router.use("/students", studentRoutes);
 router.use("/teachers", teacherRoutes);
-router.use("/exam", examinationRoutes);
+router.use("/examination-portal", examinationRoutes);
+router.use("/libraries", libraryRoutes);
 
 
 

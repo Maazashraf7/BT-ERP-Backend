@@ -1,0 +1,23 @@
+npm warn cli npm v11.7.0 does not support Node.js v18.12.0. This version of npm supports the following node versions: `^20.17.0 || >=22.9.0`. You can find the latest version at https://nodejs.org/.
+Environment variables loaded from .env
+Prisma schema loaded from prisma
+
+Error: Prisma schema validation - (validate wasm)
+Error code: P1012
+error: Type "Examination" is neither a built-in type, nor refers to another model, composite type, or enum.
+  -->  prisma\tenant\schema.prisma:34
+   | 
+33 |   teachers             Teacher[]
+34 |   examinations         Examination[]
+   | 
+error: Type "ExamSchedule" is neither a built-in type, nor refers to another model, composite type, or enum.
+  -->  prisma\tenant\schema.prisma:35
+   | 
+34 |   examinations         Examination[]
+35 |   examSchedules         ExamSchedule[]
+   | 
+
+Validation Error Count: 2
+[Context: validate]
+
+Prisma CLI Version : 5.22.0
