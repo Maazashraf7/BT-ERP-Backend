@@ -37,7 +37,7 @@ router.use("/features", featureRoutes);
 router.use("/users", userRoutes);
 router.use("/students", studentRoutes);
 router.use("/teachers", teacherRoutes);
-router.use("/examination-portal", examinationRoutes);
+router.use("/exam", examinationRoutes);
 
 
 

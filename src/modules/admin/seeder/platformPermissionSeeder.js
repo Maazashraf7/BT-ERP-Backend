@@ -44,10 +44,10 @@ const platformPermissions = [
     {key:"DELETE_PERMISSION_DOMAIN",description:"Allows deleting permission domain"},
 
     // Role_mangemnet
-    {key:"CREATE_ROLE",description:"Allows creating new role"},
-    {key:"UPDATE_ROLE",description:"Allows updating existing role"},
-    {key:"VIEW_ROLES",description:"Allows viewing list of roles"},
-    {key:"DELETE_ROLE",description:"Allows deleting role"},
+    {key:"CREATE_PLATFORM_ROLE",description:"Allows creating new role"},
+    {key:"UPDATE_PLATFORM_ROLE",description:"Allows updating existing role"},
+    {key:"VIEW_PLATFORM_ROLES",description:"Allows viewing list of roles"},
+    {key:"DELETE_PLATFORM_ROLE",description:"Allows deleting role"},
 
 
 
