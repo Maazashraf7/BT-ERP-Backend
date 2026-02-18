@@ -1,15 +1,23 @@
 import prisma from "../../../../../core/config/db.js";
 
 /**
- * 📝 Create Examination
+ * 📝 Create Examination (now linked to a Class)
  */
 export const createExamination = async (req, res) => {
     try {
         const { tenantId } = req.user;
-        const { name, examType, academicYear, term, startDate, endDate, description } = req.body;
+        const { name, examType, academicYear, term, startDate, endDate, description, classId } = req.body;
 
         if (!name) {
             return res.status(400).json({ success: false, message: "Examination name is required" });
+        }
+
+        // If classId provided, verify it belongs to this tenant
+        if (classId) {
+            const cls = await prisma.class.findFirst({ where: { id: classId, tenantId } });
+            if (!cls) {
+                return res.status(404).json({ success: false, message: "Class not found" });
+            }
         }
 
         const examination = await prisma.examination.create({
@@ -22,7 +30,11 @@ export const createExamination = async (req, res) => {
                 startDate: startDate ? new Date(startDate) : null,
                 endDate: endDate ? new Date(endDate) : null,
                 description,
+                classId: classId || null,
             },
+            include: {
+                class: true,
+            }
         });
 
         res.status(201).json({
@@ -37,20 +49,45 @@ export const createExamination = async (req, res) => {
 };
 
 /**
- * 📝 List All Examinations
+ * 📝 List All Examinations by Class ID (classId required in params)
  */
 export const listExaminations = async (req, res) => {
     try {
         const { tenantId } = req.user;
+        const { classId } = req.params;
+
+        if (!classId) {
+            return res.status(400).json({ success: false, message: "Class ID is required" });
+        }
+
+        // Verify class belongs to this tenant
+        const cls = await prisma.class.findFirst({ where: { id: classId, tenantId } });
+        if (!cls) {
+            return res.status(404).json({ success: false, message: "Class not found" });
+        }
+
         const examinations = await prisma.examination.findMany({
-            where: { tenantId },
-            include: { schedules: true },
+            where: { tenantId, classId },
+            include: {
+                schedules: {
+                    orderBy: { examDate: "asc" },
+                },
+            },
             orderBy: { createdAt: "desc" },
         });
 
+        // Remove redundant classId field from each exam and nest properly
+        const formattedExams = examinations.map(({ classId: _cid, ...exam }) => exam);
+
         res.json({
             success: true,
-            examinations,
+            class: {
+                ...cls,
+                examinations: formattedExams.map(exam => ({
+                    ...exam,
+                    schedules: exam.schedules,
+                })),
+            },
         });
     } catch (error) {
         console.error("LIST EXAMINATIONS ERROR:", error);
@@ -59,29 +96,44 @@ export const listExaminations = async (req, res) => {
 };
 
 /**
- * 📝 Create Exam Schedule (Datesheet Entry)
+ * 📝 Create Exam Schedule (examinationId from URL params)
  */
 export const createExamSchedule = async (req, res) => {
     try {
         const { tenantId } = req.user;
-        const { examinationId, subject, examDate, startTime, endTime, className, roomNumber } = req.body;
+        const { examId } = req.params;  // ← from URL
+        const { classId, subject, examDate, startTime, endTime, roomNumber } = req.body;
 
-        if (!examinationId || !subject || !examDate) {
+        if (!subject || !examDate) {
             return res.status(400).json({
                 success: false,
-                message: "Examination ID, Subject and Exam Date are required",
+                message: "Subject and Exam Date are required",
             });
+        }
+
+        // Verify examination belongs to this tenant
+        const exam = await prisma.examination.findFirst({ where: { id: examId, tenantId } });
+        if (!exam) {
+            return res.status(404).json({ success: false, message: "Examination not found" });
+        }
+
+        // If classId provided, verify it belongs to this tenant
+        if (classId) {
+            const cls = await prisma.class.findFirst({ where: { id: classId, tenantId } });
+            if (!cls) {
+                return res.status(404).json({ success: false, message: "Class not found" });
+            }
         }
 
         const schedule = await prisma.examSchedule.create({
             data: {
                 tenantId,
-                examinationId,
+                examinationId: examId,
+                classId: classId || exam.classId || null,
                 subject,
                 examDate: new Date(examDate),
                 startTime,
                 endTime,
-                className,
                 roomNumber,
             },
         });
@@ -98,21 +150,41 @@ export const createExamSchedule = async (req, res) => {
 };
 
 /**
- * 📝 Get Examination Datesheet (Class-wise)
+ * 📝 Delete Exam Schedule by ID
+ */
+export const deleteExamSchedule = async (req, res) => {
+    try {
+        const { tenantId } = req.user;
+        const { id } = req.params;
+
+        const result = await prisma.examSchedule.deleteMany({
+            where: { id, tenantId },
+        });
+
+        if (result.count === 0) {
+            return res.status(404).json({ success: false, message: "Exam schedule not found" });
+        }
+
+        res.json({
+            success: true,
+            message: "Exam schedule deleted successfully",
+        });
+    } catch (error) {
+        console.error("DELETE EXAM SCHEDULE ERROR:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * 📝 Get Exam Schedules by Exam ID (from URL params)
  */
 export const getDatesheet = async (req, res) => {
     try {
         const { tenantId } = req.user;
-        const { examinationId } = req.params;
-        const { className } = req.query;
-
-        const where = { examinationId, tenantId };
-        if (className) {
-            where.className = className;
-        }
+        const { examId } = req.params;
 
         const schedules = await prisma.examSchedule.findMany({
-            where,
+            where: { examinationId: examId, tenantId },
             orderBy: { examDate: "asc" },
         });
 
@@ -122,7 +194,7 @@ export const getDatesheet = async (req, res) => {
         });
     } catch (error) {
         console.error("GET DATESHEET ERROR:", error);
-        res.status(500).json({ success: false, message: "Failed to fetch datesheet" });
+        res.status(500).json({ success: false, message: "Failed to fetch schedules" });
     }
 };
 
@@ -152,6 +224,7 @@ export const updateExamination = async (req, res) => {
         const examination = await prisma.examination.update({
             where: { id },
             data,
+            include: { class: true },
         });
 
         res.json({
@@ -188,6 +261,9 @@ export const deleteExamination = async (req, res) => {
     }
 };
 
+/**
+ * 📝 Update Exam Schedule
+ */
 export const updateExamSchedule = async (req, res) => {
     try {
         const { id } = req.params;
@@ -210,6 +286,7 @@ export const updateExamSchedule = async (req, res) => {
         const schedule = await prisma.examSchedule.update({
             where: { id },
             data,
+            include: { class: true },
         });
 
         res.json({
@@ -222,5 +299,3 @@ export const updateExamSchedule = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to update exam schedule" });
     }
 };
-
-

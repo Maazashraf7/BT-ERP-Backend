@@ -13,6 +13,10 @@ model Examination {
   tenantId      String
   tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  // Link to Class
+  classId       String?
+  class         Class?         @relation(fields: [classId], references: [id], onDelete: SetNull)
+
   schedules     ExamSchedule[]
 
   @@map("examinations")
@@ -24,11 +28,14 @@ model ExamSchedule {
   examDate      DateTime
   startTime     String?     // e.g., 09:00 AM
   endTime       String?     // e.g., 12:00 PM
-  className     String?     // e.g., Class 10A
   roomNumber    String?
 
   examinationId String
   examination   Examination @relation(fields: [examinationId], references: [id], onDelete: Cascade)
+
+  // Direct link to Class for easy filtering
+  classId       String?
+  class         Class?      @relation(fields: [classId], references: [id], onDelete: SetNull)
 
   tenantId      String
   tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)

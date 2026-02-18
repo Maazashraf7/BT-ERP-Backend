@@ -17,6 +17,7 @@ import teacherRoutes from "../featuresa_available/education/teachers/teachers.ro
 import examinationRoutes from "../featuresa_available/education/examination_portal/examination.route.js";
 import libraryRoutes from "../featuresa_available/education/library_managements/library.route.js";
 import attendanceRoutes from "../featuresa_available/education/attendence_management/attendence.route.js";
+import classRoutes from "../featuresa_available/education/class_management/class.route.js";
 
 // Middleware
 import { authMiddleware } from "../../../core/middlewares/auth.middleware.js";
@@ -41,6 +42,7 @@ router.use("/teachers", teacherRoutes);
 router.use("/examination-portal", examinationRoutes);
 router.use("/libraries", libraryRoutes);
 router.use("/attendance", attendanceRoutes);
+router.use("/classes", classRoutes);
 
 
 

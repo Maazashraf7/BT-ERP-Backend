@@ -1,0 +1,29 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma
+Datasource "db": PostgreSQL database "AP-ERP", schema "public" at "ep-damp-frost-adqnptbm-pooler.c-2.us-east-1.aws.neon.tech"
+
+ΓÜá∩╕Å  There might be data loss when applying the changes:
+
+  ΓÇó You are about to drop the column `className` on the `exam_schedules` table, which still contains 3 non-null values.
+
+
+
+Your database is now in sync with your Prisma schema. Done in 18.71s
+
+Running generate... (Use --skip-generate to skip the generators)
+[2K[1A[2K[GRunning generate... - Prisma Client
+[2K[1A[2K[GEPERM: operation not permitted, rename 'S:\BITMAX PROJECT - 1\ERP\BT-ERP-Backend
+\node_modules\.prisma\client\query_engine-windows.dll.node.tmp16816' -> 'S:\BITM
+AX PROJECT - 1\ERP\BT-ERP-Backend\node_modules\.prisma\client\query_engine-windo
+ws.dll.node'
+
+ΓöîΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÉ
+Γöé  Update available 5.22.0 -> 7.4.0                       Γöé
+Γöé                                                         Γöé
+Γöé  This is a major update - please follow the guide at    Γöé
+Γöé  https://pris.ly/d/major-version-upgrade                Γöé
+Γöé                                                         Γöé
+Γöé  Run the following to update                            Γöé
+Γöé    npm i --save-dev prisma@latest                       Γöé
+Γöé    npm i @prisma/client@latest                          Γöé
+ΓööΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ

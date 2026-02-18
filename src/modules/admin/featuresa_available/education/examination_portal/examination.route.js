@@ -7,6 +7,7 @@ import {
     updateExamination,
     deleteExamination,
     updateExamSchedule,
+    deleteExamSchedule,
 } from "./examination.controller.js";
 import { requirePermission } from "../../../../../core/middlewares/permission.middleware.js";
 import { checkDomainInPlan } from "../../../../../core/middlewares/fetures.middleware.js";
@@ -18,13 +19,14 @@ router.use(checkDomainInPlan("EXAM"));
 
 // Examination CRUD
 router.post("/", requirePermission("CREATE_EXAM"), createExamination);
-router.get("/", requirePermission("READ_EXAM"), listExaminations);
+router.get("/class/:classId", requirePermission("READ_EXAM"), listExaminations);
 router.put("/:id", requirePermission("UPDATE_EXAM"), updateExamination);
 router.delete("/:id", requirePermission("DELETE_EXAM"), deleteExamination);
 
-// Datesheet / Schedule
-router.post("/schedule", requirePermission("CREATE_EXAM_SCHEDULE"), createExamSchedule);
-router.get("/:examinationId/datesheet", requirePermission("READ_EXAM_SCHEDULE"), getDatesheet);
+// Datesheet / Schedule (examId in URL)
+router.post("/:examId/schedule", requirePermission("CREATE_EXAM_SCHEDULE"), createExamSchedule);
+router.delete("/schedule/:id", requirePermission("DELETE_EXAM_SCHEDULE"), deleteExamSchedule);
+router.get("/:examId/schedule", requirePermission("READ_EXAM_SCHEDULE"), getDatesheet);
 router.put("/schedule/:id", requirePermission("UPDATE_EXAM_SCHEDULE"), updateExamSchedule);
 
 export default router;

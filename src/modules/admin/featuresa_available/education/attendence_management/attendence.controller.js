@@ -180,3 +180,4 @@ export const deleteAttendance = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to delete attendance" });
     }
 };
+
