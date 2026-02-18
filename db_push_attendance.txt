@@ -1,0 +1,13 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma
+Datasource "db": PostgreSQL database "AP-ERP", schema "public" at "ep-damp-frost-adqnptbm-pooler.c-2.us-east-1.aws.neon.tech"
+
+Your database is now in sync with your Prisma schema. Done in 14.78s
+
+Running generate... (Use --skip-generate to skip the generators)
+[2K[1A[2K[GRunning generate... - Prisma Client
+[2K[1A[2K[GEPERM: operation not permitted, rename 'S:\BITMAX PROJECT - 1\ERP\BT-ERP-Backend
+\node_modules\.prisma\client\query_engine-windows.dll.node.tmp11748' -> 'S:\BITM
+AX PROJECT - 1\ERP\BT-ERP-Backend\node_modules\.prisma\client\query_engine-windo
+ws.dll.node'
+

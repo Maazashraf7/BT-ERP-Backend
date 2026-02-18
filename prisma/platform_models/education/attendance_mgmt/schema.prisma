@@ -1,0 +1,37 @@
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALFDAY
+  LEAVE
+}
+
+enum AttendanceUserType {
+  STUDENT
+  TEACHER
+  STAFF
+}
+
+model Attendance {
+  id           String           @id @default(uuid())
+  date         DateTime
+  status       AttendanceStatus @default(PRESENT)
+  notes        String?          @db.Text
+  
+  // Dynamic Reference
+  userType     AttendanceUserType @default(STUDENT)
+  userId       String           // Reference to Student.id, Teacher.id, etc.
+  
+  tenantId     String
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Meta info
+  markedById   String?          // The ID of the person who marked this
+  markedByType String?          // Role/Type of person who marked
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([tenantId, date, userId, userType])
+  @@map("attendances")
+}
