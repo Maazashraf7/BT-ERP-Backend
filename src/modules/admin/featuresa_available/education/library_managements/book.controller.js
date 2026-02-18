@@ -1,4 +1,5 @@
 import prisma from "../../../../../core/config/db.js";
+import { uploadImage } from "../../../branding/upload.service.js";
 
 /**
  * 📚 Add Book to a specific Library
@@ -21,6 +22,12 @@ export const addBook = async (req, res) => {
             return res.status(404).json({ success: false, message: "Library not found" });
         }
 
+        // Upload cover image if provided
+        let coverImageUrl = null;
+        if (req.file) {
+            coverImageUrl = await uploadImage(req.file, `tenants/${tenantId}/books`);
+        }
+
         const book = await prisma.book.create({
             data: {
                 tenantId,
@@ -31,6 +38,7 @@ export const addBook = async (req, res) => {
                 category,
                 quantity: quantity ? parseInt(quantity) : 0,
                 description,
+                coverImageUrl,
             },
         });
 
@@ -66,6 +74,11 @@ export const updateBook = async (req, res) => {
         delete data.id;
 
         if (data.quantity) data.quantity = parseInt(data.quantity);
+
+        // Upload new cover image if provided
+        if (req.file) {
+            data.coverImageUrl = await uploadImage(req.file, `tenants/${tenantId}/books`);
+        }
 
         const book = await prisma.book.update({
             where: { id },

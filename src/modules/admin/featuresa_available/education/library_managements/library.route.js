@@ -14,10 +14,14 @@ import {
     getBookDetails
 } from "./book.controller.js";
 
+
 import { requirePermission } from "../../../../../core/middlewares/permission.middleware.js";
 import { checkDomainInPlan } from "../../../../../core/middlewares/fetures.middleware.js";
-
+import { upload } from "../../../../../core/middlewares/upload.middleware.js";
 const router = Router();
+
+
+
 
 // Routes are already protected by tenantRouter middleware (authMiddleware and checkSubscription)
 router.use(checkDomainInPlan("LIBRARY"));
@@ -30,10 +34,10 @@ router.put("/:id", requirePermission("UPDATE_LIBRARY"), updateLibrary);
 router.delete("/:id", requirePermission("DELETE_LIBRARY"), deleteLibrary);
 
 // 📚 Book Management (CRUD within Library)
-router.post("/books", requirePermission("ADD_BOOK"), addBook);
+router.post("/books", requirePermission("ADD_BOOK"), upload.single("coverImage",), addBook);
 router.get("/:libraryId/books", requirePermission("GET_BOOKS_BY_LIBRARY"), getBooksByLibrary);
-router.get("/books/:id", requirePermission("GET_BOOK_DETAILS"), getBookDetails);
-router.put("/books/:id", requirePermission("UPDATE_BOOK"), updateBook);
+router.get("/books/:id", requirePermission("GET_BOOK_DETAILS"),  getBookDetails);
+router.put("/books/:id", requirePermission("UPDATE_BOOK"), upload.single("coverImage"), updateBook);
 router.delete("/books/:id", requirePermission("DELETE_BOOK"), deleteBook);
 
 export default router;

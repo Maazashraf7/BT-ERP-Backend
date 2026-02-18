@@ -17,6 +17,7 @@ model Library {
 
 model Book {
   id               String         @id @default(uuid())
+  coverImageUrl    String?
   title            String
   author           String?
   isbn             String?

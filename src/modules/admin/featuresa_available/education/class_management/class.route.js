@@ -13,7 +13,7 @@ import { checkDomainInPlan } from "../../../../../core/middlewares/fetures.middl
 const router = Router();
 
 // Domain restriction
-router.use(checkDomainInPlan("ACADEMIC"));
+router.use(checkDomainInPlan("CLASS"));
 
 // 🏫 Class CRUD
 router.post("/", requirePermission("CREATE_CLASS"), createClass);
