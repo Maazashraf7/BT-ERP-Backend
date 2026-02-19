@@ -37,6 +37,7 @@ model Tenant {
   books                Book[]
   attendances          Attendance[]
   classes              Class[]
+  bookAssignments      BookAssignment[]
   permissionDomains    TenantPermissionDomain[]
 
   @@map("tenant")
