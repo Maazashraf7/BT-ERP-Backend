@@ -168,3 +168,47 @@ export const getBookDetails = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to fetch book" });
     }
 };
+
+
+
+export const AssignBook = async (req, res) => {
+    try {
+        const { tenantId } = req.user;
+        const { bookId, studentId, studentName, classId, className, studentEmail, issueDate, dueDate } = req.body;
+
+        if (!bookId || !studentId || !studentName || !classId || !className || !studentEmail || !issueDate || !dueDate) {
+            return res.status(400).json({ success: false, message: "All fields are required" });
+        }
+
+        const book = await prisma.book.findFirst({
+            where: { id: bookId, tenantId }
+        });
+
+        if (!book) {
+            return res.status(404).json({ success: false, message: "Book not found" });
+        }
+
+        const bookAssignment = await prisma.bookAssignment.create({
+            data: {
+                tenantId,
+                bookId,
+                studentId,
+                studentName,
+                classId,
+                className,
+                studentEmail,
+                issueDate,
+                dueDate,
+            },
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "Book assigned successfully",
+            bookAssignment,
+        });
+    } catch (error) {
+        console.error("ASSIGN BOOK ERROR:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+}

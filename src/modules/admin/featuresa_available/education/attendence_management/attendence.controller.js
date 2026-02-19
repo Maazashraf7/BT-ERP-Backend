@@ -13,6 +13,8 @@ export const markAttendance = async (req, res) => {
                 success: false,
                 message: "User ID, User Type, Date and Status are required",
             });
+
+
         }
 
         // Validate userType
@@ -153,6 +155,7 @@ export const getAttendanceReport = async (req, res) => {
     }
 };
 
+
 /**
  * 📝 Delete Attendance (Admin/SuperAdmin only)
  */
@@ -180,4 +183,6 @@ export const deleteAttendance = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to delete attendance" });
     }
 };
+
+
 
