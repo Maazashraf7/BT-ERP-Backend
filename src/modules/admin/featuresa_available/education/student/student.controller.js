@@ -5,11 +5,20 @@ import prisma from "../../../../../core/config/db.js";
  */
 export const createStudent = async (req, res) => {
     try {
-        const { studentId, firstName, lastName, email, phone, gender, dateOfBirth, address, parentName, parentPhone, classId, sectionId  } = req.body;
+        const { studentId, firstName, lastName, email, phone, gender, dateOfBirth, address, parentName, parentPhone, classId } = req.body;
         const { tenantId } = req.user;
 
         if (!firstName || !lastName) {
             return res.status(400).json({ success: false, message: "First name and Last name are required" });
+        }
+
+        if (classId) {
+            const cls = await prisma.class.findFirst({
+                where: { id: classId, tenantId }
+            });
+            if (!cls) {
+                return res.status(404).json({ success: false, message: "Selected class not found" });
+            }
         }
 
         const student = await prisma.student.create({
@@ -19,7 +28,6 @@ export const createStudent = async (req, res) => {
                 lastName,
                 email,
                 classId,
-                sectionId,
                 phone,
                 gender,
                 dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
@@ -27,6 +35,9 @@ export const createStudent = async (req, res) => {
                 parentName,
                 parentPhone,
                 tenantId
+            },
+            include: {
+                class: true
             }
         });
 
@@ -45,6 +56,9 @@ export const listStudents = async (req, res) => {
         const { tenantId } = req.user;
         const students = await prisma.student.findMany({
             where: { tenantId },
+            include: {
+                class: true
+            },
             orderBy: { createdAt: "desc" }
         });
 
@@ -64,7 +78,10 @@ export const getStudentDetails = async (req, res) => {
         const { tenantId } = req.user;
 
         const student = await prisma.student.findFirst({
-            where: { id, tenantId }
+            where: { id, tenantId },
+            include: {
+                class: true
+            }
         });
 
         if (!student) {
@@ -104,9 +121,21 @@ export const updateStudent = async (req, res) => {
             data.dateOfBirth = new Date(data.dateOfBirth);
         }
 
+        if (data.classId) {
+            const cls = await prisma.class.findFirst({
+                where: { id: data.classId, tenantId }
+            });
+            if (!cls) {
+                return res.status(404).json({ success: false, message: "Selected class not found" });
+            }
+        }
+
         const student = await prisma.student.update({
             where: { id },
-            data
+            data,
+            include: {
+                class: true
+            }
         });
 
         res.json({ success: true, message: "Student updated successfully", student });

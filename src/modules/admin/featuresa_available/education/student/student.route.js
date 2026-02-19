@@ -16,10 +16,10 @@ const router = Router();
 router.use(checkDomainInPlan("ACADEMIC"))
 router.use(checkSubscription)
 
-router.post("/create", requirePermission("CREATE_STUDENT"), createStudent);
-router.get("/list", requirePermission("READ_STUDENT"), listStudents);
-router.get("/details/:id", requirePermission("READ_STUDENT"), getStudentDetails);
-router.put("/update/:id", requirePermission("UPDATE_STUDENT"), updateStudent);
-router.delete("/delete/:id", requirePermission("DELETE_STUDENT"), deleteStudent);
+router.post("/", requirePermission("CREATE_STUDENT"), createStudent);
+router.get("/", requirePermission("READ_STUDENT"), listStudents);
+router.get("/:id", requirePermission("READ_STUDENT"), getStudentDetails);
+router.put("/:id", requirePermission("UPDATE_STUDENT"), updateStudent);
+router.delete("/:id", requirePermission("DELETE_STUDENT"), deleteStudent);
 
 export default router;

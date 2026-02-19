@@ -16,6 +16,7 @@ model Class {
 
   examinations Examination[]
   schedules    ExamSchedule[]
+  students     Student[]
 
   @@unique([tenantId, name, section, academicYear])
   @@map("classes")
