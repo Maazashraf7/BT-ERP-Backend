@@ -7,7 +7,7 @@ model Student {
   phone            String?
   gender           String?
   dateOfBirth      DateTime?
-  classId          String?        @relation("Class", fields: [classId], references: [id], onDelete:Cascade)
+  classId          String?
   address          String?
   parentName       String?
   parentPhone      String?
@@ -17,7 +17,7 @@ model Student {
 
   tenantId         String
   tenant           Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  class            Class?         @relation(fields: [classId], references: [id])
+  class            Class?         @relation(fields: [classId], references: [id], onDelete: Cascade)
   
   @@map("students")
   @@unique([tenantId, studentId])
