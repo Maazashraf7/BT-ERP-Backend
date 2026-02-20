@@ -7,7 +7,7 @@ model Student {
   phone            String?
   gender           String?
   dateOfBirth      DateTime?
-  classId          String?
+  classId          String?        @relation("Class", fields: [classId], references: [id], onDelete:Cascade)
   address          String?
   parentName       String?
   parentPhone      String?
