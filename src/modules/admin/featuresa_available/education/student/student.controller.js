@@ -1,11 +1,13 @@
 import prisma from "../../../../../core/config/db.js";
+import bcrypt from "bcryptjs";
+import { uploadImage } from "../../../branding/upload.service.js";
 
 /**
  * 👑 Create Student
  */
 export const createStudent = async (req, res) => {
     try {
-        const { studentId, firstName, lastName, email, phone, gender, dateOfBirth, address, parentName, parentPhone, classId } = req.body;
+        const { studentId, firstName, lastName, email, phone, gender, dateOfBirth, address, parentName, parentPhone, classId, password } = req.body;
         const { tenantId } = req.user;
 
         if (!firstName || !lastName) {
@@ -21,6 +23,18 @@ export const createStudent = async (req, res) => {
             }
         }
 
+        // 🖼️ Upload Profile Picture if provided
+        let profilePictureUrl = null;
+        if (req.file) {
+            profilePictureUrl = await uploadImage(req.file, `tenants/${tenantId}/students`);
+        }
+
+        // 🔐 Hash Password if provided
+        let hashedPassword = null;
+        if (password) {
+            hashedPassword = await bcrypt.hash(password, 10);
+        }
+
         const student = await prisma.student.create({
             data: {
                 studentId,
@@ -34,6 +48,8 @@ export const createStudent = async (req, res) => {
                 address,
                 parentName,
                 parentPhone,
+                password: hashedPassword,
+                profilePictureUrl,
                 tenantId
             },
             include: {
@@ -128,6 +144,16 @@ export const updateStudent = async (req, res) => {
             if (!cls) {
                 return res.status(404).json({ success: false, message: "Selected class not found" });
             }
+        }
+
+        // 🖼️ Upload New Profile Picture if provided
+        if (req.file) {
+            data.profilePictureUrl = await uploadImage(req.file, `tenants/${tenantId}/students`);
+        }
+
+        // 🔐 Hash New Password if provided
+        if (data.password) {
+            data.password = await bcrypt.hash(data.password, 10);
         }
 
         const student = await prisma.student.update({

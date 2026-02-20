@@ -11,6 +11,9 @@ model Student {
   address          String?
   parentName       String?
   parentPhone      String?
+  password         String?        // For student login
+  profilePictureUrl String?
+  role             String         @default("STUDENT")
   isActive         Boolean        @default(true)
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
